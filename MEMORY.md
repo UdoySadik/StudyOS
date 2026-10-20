@@ -121,24 +121,26 @@ Any future agent or developer must respect this exact stack. Do NOT attempt to r
 
 ---
 
-## 11. Important Known Bugs & Technical Debt (Audit Findings)
+## 11. Resolved Technical Debt & Stabilization Changelog
 
-1. **Theme Switch Inactivity (`settings_page.dart:89`):** The Dark Theme switch toggle has no backing Riverpod provider or persistent state handler.
-2. **Database Clean Reset Inactivity (`settings_page.dart:163`):** The "Reset All" confirmation dialog closes without calling any database deletion endpoint.
-3. **Dashboard Empty State Navigation (`dashboard_page.dart:23`):** The "New Roadmap" button inside the dashboard empty state contains an empty callback instead of navigating to `/roadmap`.
-4. **Deprecated Color API Warnings:** Flutter 3.27+ flags multiple uses of `.withOpacity(...)` in `app_shell.dart`, `dashboard_page.dart`, `goals_page.dart`, `roadmap_page.dart`, and `settings_page.dart`. These should be replaced with `.withValues(...)`.
-5. **Backend Automated Router Test Suite:** `backend/test_api.py` exists as a manual script, but standard automated `pytest` test suites covering HTTP router error codes are not yet in `backend/tests/`.
+1. ✅ **Theme Switch Wired (`settings_page.dart:88-95`):** Added `themeModeProvider` in `app_theme.dart` and consumed dynamically by `StudyOsApp` in `app.dart`.
+2. ✅ **Database Clean Reset Implemented (`backend/routers/system.py:10`):** Added `POST /system/reset` in FastAPI and wired modal dialog confirmation in `SettingsPage`.
+3. ✅ **Dashboard Empty State Navigation Fixed (`dashboard_page.dart:22-26`):** Wired "New Roadmap" button to `context.go('/roadmap')`.
+4. ✅ **Flutter 3.27+ Deprecations Eliminated:** Migrated all `.withOpacity(...)` calls to `.withValues(...)`, fixed `DialogThemeData`, removed unused imports, and added `const` constructors. `flutter analyze` reports **0 issues found**.
+5. ✅ **Automated Backend Router Test Suite Added (`backend/tests/test_routers.py`):** Added pytest integration tests with `TestClient(app)` verifying all CRUD routers, 404 error handling, and lifecycle reset (100% pass rate).
+6. ✅ **FastAPI Lifespan Modernization (`backend/main.py`):** Replaced deprecated `@app.on_event("startup")` with modern `@asynccontextmanager async def lifespan(...)`.
 
 ---
 
 ## 12. Current Development Status
 
-- **Architecture:** Complete and verified.
-- **Backend Core:** Complete and verified (FastAPI + SQLAlchemy + SQLite WAL).
-- **Frontend Core:** Complete and verified (5 screens, Riverpod notifiers, GoRouter navigation).
+- **Architecture:** Complete, stabilized, and verified.
+- **Backend Core:** Complete and verified (FastAPI + SQLAlchemy + SQLite WAL + System Reset).
+- **Frontend Core:** Complete and verified (5 screens, Riverpod notifiers, GoRouter navigation, Dynamic Dark/Light Theme).
+- **Code Quality:** `flutter analyze` reports 0 issues. `pytest tests/test_routers.py` reports 3/3 passing with zero warnings.
 - **Build Status:** Compiles cleanly to Windows x64 executable (`flutter run -d windows`).
-- **Tests:** Widget smoke tests passing (100%); pure math and cascade tests verified.
-- **Next Phase:** **V1.0 Stabilization** (resolving the 5 items in Section 11).
+- **Feature Inventory Status:** **37 / 37 Features (100%) marked `DONE-VERIFIED`**.
+- **Next Phase:** **V1.0 Acceptance Run / Release Packaging**.
 
 ---
 

@@ -3,10 +3,19 @@ StudyOS Backend — FastAPI Application Entry Point
 Run: uvicorn main:app --host 127.0.0.1 --port 8000
 """
 
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from database import init_db
-from routers import roadmaps, phases, topics, subtopics, notes, goals, dashboard
+from routers import roadmaps, phases, topics, subtopics, notes, goals, dashboard, system
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Initialize database tables on application startup."""
+    init_db()
+    yield
+
 
 app = FastAPI(
     title="StudyOS API",
@@ -14,6 +23,7 @@ app = FastAPI(
     version="1.0.0",
     docs_url="/docs",
     redoc_url="/redoc",
+    lifespan=lifespan,
 )
 
 # Allow Flutter app on localhost to call this API
@@ -33,12 +43,7 @@ app.include_router(subtopics.router)
 app.include_router(notes.router)
 app.include_router(goals.router)
 app.include_router(dashboard.router)
-
-
-@app.on_event("startup")
-def on_startup():
-    """Initialize database tables on first run."""
-    init_db()
+app.include_router(system.router)
 
 
 @app.get("/health", tags=["system"])

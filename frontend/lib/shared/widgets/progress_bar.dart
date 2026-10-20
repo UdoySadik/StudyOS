@@ -60,7 +60,7 @@ class StudyProgressBar extends StatelessWidget {
               Container(
                 height: height,
                 decoration: BoxDecoration(
-                  color: barColor.withOpacity(0.12),
+                  color: barColor.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(height / 2),
                 ),
               ),
@@ -72,12 +72,12 @@ class StudyProgressBar extends StatelessWidget {
                   height: height,
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
-                      colors: [barColor, barColor.withOpacity(0.7)],
+                      colors: [barColor, barColor.withValues(alpha: 0.7)],
                     ),
                     borderRadius: BorderRadius.circular(height / 2),
                     boxShadow: [
                       BoxShadow(
-                        color: barColor.withOpacity(0.4),
+                        color: barColor.withValues(alpha: 0.4),
                         blurRadius: 6,
                         offset: const Offset(0, 2),
                       ),

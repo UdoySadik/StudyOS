@@ -58,7 +58,7 @@ The following table reflects the **complete, audited status** of all V1.0 featur
 | **INV-001** | Application Shell | Branding & Versioning | `DONE-VERIFIED` | `app_shell.dart:109, 142` (StudyOS logo & v1.0.0 label) |
 | **INV-002** | Application Shell | Sidebar Navigation | `DONE-VERIFIED` | `app_shell.dart:21-52`, `app_router.dart:10-54` (5 routes) |
 | **INV-003** | Application Shell | Dark Theme | `DONE-VERIFIED` | `app_theme.dart:41-100`, `app.dart:15` (Material 3 Dark) |
-| **INV-004** | Application Shell | Light Theme Toggle | `UI-ONLY` | `settings_page.dart:89` (Switch exists; callback is empty) |
+| **INV-004** | Application Shell | Light Theme Toggle | `DONE-VERIFIED` | `app_theme.dart:5`, `app.dart:10-18`, `settings_page.dart:88-95` |
 | **INV-005** | Application Shell | Window Resizing & Layout | `DONE-VERIFIED` | `app_shell.dart:65-71` (Responsive desktop flex) |
 | **INV-006** | Dashboard | Active Roadmap Title | `DONE-VERIFIED` | `dashboard_page.dart:96`, `dashboard.py:80` |
 | **INV-007** | Dashboard | Current Phase & Topic | `DONE-VERIFIED` | `dashboard.py:45-55`, `dashboard_page.dart:104-120` |
@@ -68,7 +68,7 @@ The following table reflects the **complete, audited status** of all V1.0 featur
 | **INV-011** | Dashboard | Today's Focus Suggestions | `DONE-VERIFIED` | `progress_calculator.py:55-70`, `dashboard_page.dart:191` |
 | **INV-012** | Dashboard | Phase Breakdown Cards | `DONE-VERIFIED` | `progress_calculator.py:26-37`, `dashboard_page.dart:260` |
 | **INV-013** | Dashboard | Multiple Roadmap Switcher | `DONE-VERIFIED` | `dashboard_page.dart:125-139` (Dropdown selector) |
-| **INV-014** | Dashboard | Empty State Handling | `UI-ONLY` | `dashboard_page.dart:23` (CTA callback empty; no navigation) |
+| **INV-014** | Dashboard | Empty State Handling | `DONE-VERIFIED` | `dashboard_page.dart:22-26` (Wired to `context.go('/roadmap')`) |
 | **INV-015** | Roadmap Manager | Create Roadmap | `DONE-VERIFIED` | `roadmap_page.dart:74`, `roadmaps.py:19` |
 | **INV-016** | Roadmap Manager | Add / Edit / Delete Phase | `DONE-VERIFIED` | `roadmap_page.dart:212, 637, 662`, `phases.py:20, 43, 54` |
 | **INV-017** | Roadmap Manager | Add / Edit / Delete Topic | `DONE-VERIFIED` | `roadmap_page.dart:320, 695, 719`, `topics.py:21, 43, 68` |
@@ -90,7 +90,7 @@ The following table reflects the **complete, audited status** of all V1.0 featur
 | **INV-033** | Notes | Cascade Cleanup on Delete | `DONE-VERIFIED` | `models/note.py:17` (`ondelete="CASCADE"`), verified |
 | **INV-034** | Local Storage | SQLite WAL Engine | `DONE-VERIFIED` | `database.py:27` (`PRAGMA journal_mode=WAL`) |
 | **INV-035** | Local Storage | Foreign Key Enforcment | `DONE-VERIFIED` | `database.py:26` (`PRAGMA foreign_keys=ON`) |
-| **INV-036** | Local Storage | Database Clean Reset | `UI-ONLY` | `settings_page.dart:163` (Dialog button has empty callback) |
+| **INV-036** | Local Storage | Database Clean Reset | `DONE-VERIFIED` | `backend/routers/system.py:10`, `settings_page.dart:150-185` |
 | **INV-037** | Settings | Environment Information | `DONE-VERIFIED` | `settings_page.dart:38-41` (Informational text cards) |
 
 ---

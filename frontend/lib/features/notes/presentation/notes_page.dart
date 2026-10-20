@@ -165,10 +165,10 @@ class _NotesPageState extends ConsumerState<NotesPage> {
   }
 
   Widget _buildNoNotesSelectedState() {
-    return Center(
+    return const Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
-        children: const [
+        children: [
           Icon(Icons.sticky_note_2_outlined, size: 64, color: AppColors.textDarkMuted),
           SizedBox(height: 16),
           Text(

@@ -136,8 +136,8 @@ class _Sidebar extends StatelessWidget {
           ),
 
           // Version badge
-          Padding(
-            padding: const EdgeInsets.all(16),
+          const Padding(
+            padding: EdgeInsets.all(16),
             child: Text(
               'v1.0.0',
               style: TextStyle(
@@ -181,13 +181,13 @@ class _SidebarNavItemState extends State<_SidebarNavItem> {
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           decoration: BoxDecoration(
             color: isActive
-                ? AppColors.primary.withOpacity(0.15)
+                ? AppColors.primary.withValues(alpha: 0.15)
                 : _hovered
                     ? AppColors.darkCard
                     : Colors.transparent,
             borderRadius: BorderRadius.circular(8),
             border: isActive
-                ? Border.all(color: AppColors.primary.withOpacity(0.3), width: 1)
+                ? Border.all(color: AppColors.primary.withValues(alpha: 0.3), width: 1)
                 : null,
           ),
           child: Row(

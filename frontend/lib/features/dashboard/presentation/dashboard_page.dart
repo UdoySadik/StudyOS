@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
+import 'package:go_router/go_router.dart';
 import '../../dashboard/application/dashboard_provider.dart';
 import '../../roadmap/application/roadmap_provider.dart';
 import '../domain/dashboard_summary.dart';
@@ -21,7 +21,7 @@ class DashboardPage extends ConsumerWidget {
       data: (roadmaps) {
         if (roadmaps.isEmpty) {
           return _EmptyState(onCreateRoadmap: () {
-            // Navigate to roadmap page
+            context.go('/roadmap');
           });
         }
 
@@ -388,7 +388,7 @@ class _StatCard extends StatelessWidget {
                 width: 36,
                 height: 36,
                 decoration: BoxDecoration(
-                  color: iconColor.withOpacity(0.12),
+                  color: iconColor.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(icon, color: iconColor, size: 18),

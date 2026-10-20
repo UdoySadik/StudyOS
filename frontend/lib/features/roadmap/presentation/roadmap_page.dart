@@ -648,7 +648,7 @@ class _PhaseActions extends ConsumerWidget {
         ),
         IconButton(
           icon: const Icon(Icons.delete_outline, size: 14),
-          color: AppColors.error.withOpacity(0.7),
+          color: AppColors.error.withValues(alpha: 0.7),
           onPressed: () async {
             await ref.read(phaseNotifierProvider(phase.roadmapId).notifier).deletePhase(phase.id);
           },
@@ -707,7 +707,7 @@ class _TopicActions extends ConsumerWidget {
         ),
         IconButton(
           icon: const Icon(Icons.delete_outline, size: 13),
-          color: AppColors.error.withOpacity(0.6),
+          color: AppColors.error.withValues(alpha: 0.6),
           onPressed: () async {
             await ref.read(topicNotifierProvider(phaseId).notifier).deleteTopic(topic.id);
           },

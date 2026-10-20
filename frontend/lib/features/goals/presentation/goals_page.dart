@@ -31,7 +31,7 @@ class _GoalsPageState extends ConsumerState<GoalsPage> {
               surface: AppColors.darkCard,
               onSurface: AppColors.textDarkPrimary,
             ),
-            dialogBackgroundColor: AppColors.darkBg,
+            dialogTheme: const DialogThemeData(backgroundColor: AppColors.darkBg),
           ),
           child: child!,
         );
@@ -170,7 +170,7 @@ class _GoalsPageState extends ConsumerState<GoalsPage> {
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: AppColors.darkBorder),
         gradient: LinearGradient(
-          colors: [AppColors.darkCard, AppColors.primary.withOpacity(0.05)],
+          colors: [AppColors.darkCard, AppColors.primary.withValues(alpha: 0.05)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -186,7 +186,7 @@ class _GoalsPageState extends ConsumerState<GoalsPage> {
                   Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: AppColors.primary.withOpacity(0.12),
+                      color: AppColors.primary.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: const Icon(Icons.flag, color: AppColors.primary, size: 20),
