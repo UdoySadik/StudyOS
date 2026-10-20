@@ -1,0 +1,190 @@
+# StudyOS — Tasks & Implementation Progress (`TASKS.md`)
+
+> **Document Version:** 1.0.0  
+> **Master Reference:** [ARCHITECTURE.md](file:///c:/StudyOS/ARCHITECTURE.md), [PRD.md](file:///c:/StudyOS/PRD.md)  
+> **Current Milestone:** V1.0 Stabilization (Scope Frozen)  
+> **Test Status:** 100% Widget Smoke Passing, Pure Functions Verified, Cascade Deletes Verified
+
+---
+
+## 1. High-Level Milestone Dashboard
+
+| Milestone | Focus | Status | Target Completion |
+|---|---|:---:|---|
+| **V1.0 MVP Core** | Core Roadmap, Notes, Goals, Dashboard, Backend | ✅ **DONE-VERIFIED** | October 2026 |
+| **V1.0 Stabilization** | UI Polish, Deprecation Fixes, Reset & Theme wiring | ⏳ **IN PROGRESS** | Current Sprint |
+| **V1.1 Productivity** | Roadmap search, Keyboard shortcuts, View toggles | 📋 PROPOSED | Post-V1.0 |
+| **V1.2 Planning** | Daily/Weekly planners, Study-hour tracking | 📋 PROPOSED | Future |
+| **V1.3 Analytics** | Consistency streaks, Completion trends, Hour charts | 📋 PROPOSED | Future |
+| **V1.4 Resources** | Project tracker, Syllabus book & URL repository | 📋 PROPOSED | Future |
+| **V2.0 Local AI** | Offline AI Study Planner, Quiz generator, Note summarizer | 📋 PROPOSED | Future |
+| **V2.x Doc Intel** | Local PDF QA and Textbook RAG | 📋 PROPOSED | Future |
+| **V3.0 Sync & Cloud** | Multi-device encrypted sync, Cloud backups | 📋 PROPOSED | Long-term |
+
+---
+
+## Section A: V1.0 Audit Findings
+
+*Audit conducted across source code, models, schemas, and live tests.*
+
+- [x] **`AUDIT-001` — Shell & Navigation Core**
+  - **Status:** `DONE-VERIFIED` | **Priority:** P1 | **Release:** V1.0
+  - **Description:** Verified 5-route sidebar navigation, branding, version badge, and responsive desktop container layout.
+  - **Evidence:** `app_shell.dart:21-52`, `app_router.dart:10-54`.
+
+- [x] **`AUDIT-002` — Dynamic Dashboard Calculations**
+  - **Status:** `DONE-VERIFIED` | **Priority:** P0 | **Release:** V1.0
+  - **Description:** Verified dynamic progress percentage, completed/remaining counts, and countdown days computed via pure functions without redundant DB columns.
+  - **Evidence:** `backend/utils/progress_calculator.py`, `backend/routers/dashboard.py`. Automated test verified.
+
+- [x] **`AUDIT-003` — Roadmap 4-Tier Hierarchy**
+  - **Status:** `DONE-VERIFIED` | **Priority:** P0 | **Release:** V1.0
+  - **Description:** Verified strict 4-level nesting: Roadmap → Phase → Topic → Subtopic with full CRUD, order indexing, and ExpansionTiles.
+  - **Evidence:** `models/roadmap.py`, `models/phase.py`, `models/topic.py`, `models/subtopic.py`, `roadmap_page.dart`.
+
+- [x] **`AUDIT-004` — Topic & Subtopic Completion Toggles**
+  - **Status:** `DONE-VERIFIED` | **Priority:** P0 | **Release:** V1.0
+  - **Description:** Verified checkbox toggles mutate `is_completed`, trigger Riverpod invalidation, and update dashboard immediately.
+  - **Evidence:** `topics.py:55-64`, `subtopics.py:33-43`, `roadmap_provider.dart:105, 131`.
+
+- [x] **`AUDIT-005` — Goal Pacing & Overdue Detection**
+  - **Status:** `DONE-VERIFIED` | **Priority:** P0 | **Release:** V1.0
+  - **Description:** Verified target date configuration, countdown days remaining, daily required topics calculation, and overdue status.
+  - **Evidence:** `progress_calculator.py:40-52`, `goals_page.dart:161-240`. Automated test verified.
+
+- [x] **`AUDIT-006` — Context-Linked Notes & Auto-Save**
+  - **Status:** `DONE-VERIFIED` | **Priority:** P0 | **Release:** V1.0
+  - **Description:** Verified 1-to-1 topic-note linkage, dual Edit/Preview Markdown modes, and 500ms debounced PUT upsert auto-save.
+  - **Evidence:** `notes.py:30-44`, `notes_provider.dart:48-55`, `notes_page.dart:227-335`.
+
+- [x] **`AUDIT-007` — SQLite WAL & Foreign Key Cascade**
+  - **Status:** `DONE-VERIFIED` | **Priority:** P0 | **Release:** V1.0
+  - **Description:** Verified `PRAGMA foreign_keys=ON`, `PRAGMA journal_mode=WAL`, and `ondelete="CASCADE"` wiping child entities when parent is deleted.
+  - **Evidence:** `database.py:23-29`. Verified with in-memory cascade deletion script.
+
+- [ ] **`AUDIT-008` — Theme Mode Switching Toggle**
+  - **Status:** `UI-ONLY` | **Priority:** P1 | **Release:** V1.0
+  - **Description:** Dark Theme switch exists in Settings UI, but callback is empty and theme is hardcoded to dark in `app.dart`.
+  - **Evidence:** `settings_page.dart:89-94`, `app.dart:15`.
+
+- [ ] **`AUDIT-009` — Database Clean Reset Control**
+  - **Status:** `UI-ONLY` | **Priority:** P1 | **Release:** V1.0
+  - **Description:** "Reset All" confirmation dialog exists in Settings UI, but contains an empty callback without calling backend or clearing tables.
+  - **Evidence:** `settings_page.dart:163-166`.
+
+- [ ] **`AUDIT-010` — Dashboard Empty State Navigation**
+  - **Status:** `UI-ONLY` | **Priority:** P1 | **Release:** V1.0
+  - **Description:** Dashboard empty state renders a "New Roadmap" action button with an empty callback instead of routing to `/roadmap`.
+  - **Evidence:** `dashboard_page.dart:23-25`.
+
+---
+
+## Section B: V1.0 Stabilization Tasks (P0 & P1)
+
+- [ ] **`TASK-STAB-001` — Implement Backend Database Reset Endpoint**
+  - **Status:** `TODO` | **Priority:** P1 | **Milestone:** V1.0 Stabilization
+  - **Description:** Add `POST /system/reset` in backend that drops and recreates all tables via `Base.metadata.drop_all(bind=engine)` and `init_db()`.
+  - **Dependencies:** None
+  - **Acceptance Criteria:** Calling `POST /system/reset` wipes all rows, reinitializes clean schema, and returns `{"status": "reset_complete"}`.
+  - **Files:** `backend/routers/system.py`, `backend/main.py`.
+
+- [ ] **`TASK-STAB-002` — Connect Settings Reset Button to API**
+  - **Status:** `TODO` | **Priority:** P1 | **Milestone:** V1.0 Stabilization
+  - **Description:** Wire the "Reset All" button in `SettingsPage` to invoke `ApiService().post('/system/reset')`, invalidate all providers, and display a snackbar confirmation.
+  - **Dependencies:** `TASK-STAB-001`
+  - **Acceptance Criteria:** Clicking "Reset All" in dialog empties local database and refreshes UI to empty states.
+  - **Files:** `frontend/lib/features/settings/presentation/settings_page.dart`.
+
+- [ ] **`TASK-STAB-003` — Implement Dynamic ThemeMode Provider**
+  - **Status:** `TODO` | **Priority:** P1 | **Milestone:** V1.0 Stabilization
+  - **Description:** Create a `themeModeProvider` in `app_theme.dart` or `app.dart`. Wire the Switch in `settings_page.dart` to toggle between `ThemeMode.dark` and `ThemeMode.light`.
+  - **Dependencies:** None
+  - **Acceptance Criteria:** Toggling the switch switches application styling instantly between `AppTheme.dark()` and `AppTheme.light()`.
+  - **Files:** `frontend/lib/app.dart`, `frontend/lib/features/settings/presentation/settings_page.dart`.
+
+- [ ] **`TASK-STAB-004` — Fix Dashboard Empty State Navigation**
+  - **Status:** `TODO` | **Priority:** P1 | **Milestone:** V1.0 Stabilization
+  - **Description:** Wire `_EmptyState(onCreateRoadmap: () => context.go('/roadmap'))` in `DashboardPage`.
+  - **Dependencies:** None
+  - **Acceptance Criteria:** Clicking "New Roadmap" on an empty dashboard navigates immediately to the Roadmap Manager.
+  - **Files:** `frontend/lib/features/dashboard/presentation/dashboard_page.dart`.
+
+- [ ] **`TASK-STAB-005` — Migrate Deprecated Flutter API Usages**
+  - **Status:** `TODO` | **Priority:** P2 | **Milestone:** V1.0 Stabilization
+  - **Description:** Replace `.withOpacity(...)` with `.withValues(...)`, `dialogBackgroundColor` with `DialogThemeData`, and `activeColor` with `activeThumbColor`.
+  - **Dependencies:** None
+  - **Acceptance Criteria:** `flutter analyze` reports zero deprecated API warnings.
+  - **Files:** `dashboard_page.dart`, `goals_page.dart`, `roadmap_page.dart`, `settings_page.dart`, `app_shell.dart`, `progress_bar.dart`.
+
+- [ ] **`TASK-STAB-006` — Build Automated Backend Router Test Suite**
+  - **Status:** `TODO` | **Priority:** P1 | **Milestone:** V1.0 Stabilization
+  - **Description:** Create `backend/tests/` with `pytest` and `TestClient(app)` verifying all CRUD endpoints, 404 responses, and 422 validations.
+  - **Dependencies:** None
+  - **Acceptance Criteria:** `pytest backend/tests` executes and passes with 100% success rate without requiring an external running server.
+  - **Files:** `backend/tests/test_routers.py`.
+
+---
+
+## Section C: Required Tasks for V1.0 Acceptance
+
+- [ ] **`TASK-REQ-001` — Verified End-to-End Startup Verification**
+  - **Status:** `TODO` | **Priority:** P0 | **Milestone:** V1.0 Acceptance
+  - **Description:** Perform complete manual and automated smoke test of dual-terminal launch and single-terminal auto-launch on Windows 11.
+  - **Dependencies:** `TASK-STAB-001` through `TASK-STAB-004`.
+  - **Acceptance Criteria:** App launches cleanly, connects to backend, creates curriculum, sets goal, takes note, and preserves data across app reboot.
+
+---
+
+## Section D: Proposed V1.1 — Productivity Improvements
+
+- [ ] **`TASK-V11-001` — Roadmap & Notes Full-Text Search**
+  - **Status:** `BACKLOG` | **Priority:** P2 | **Milestone:** V1.1
+  - **Description:** Add instant search filter bar in Roadmap and Notes explorers.
+  - **Dependencies:** V1.0 Release.
+  - **Acceptance Criteria:** Typing a keyword highlights matching topics and notes in realtime.
+
+- [ ] **`TASK-V11-002` — Global Desktop Keyboard Shortcuts**
+  - **Status:** `BACKLOG` | **Priority:** P2 | **Milestone:** V1.1
+  - **Description:** Implement `LogicalKeySet` listeners for `Ctrl+1` (Dashboard), `Ctrl+2` (Roadmap), `Ctrl+3` (Goals), `Ctrl+4` (Notes), `Ctrl+S` (Save note).
+  - **Dependencies:** V1.0 Release.
+
+- [ ] **`TASK-V11-003` — Compact Tree View Mode**
+  - **Status:** `BACKLOG` | **Priority:** P3 | **Milestone:** V1.1
+  - **Description:** Toggle between spacious card view and compact tree table view in Roadmap Manager.
+  - **Dependencies:** V1.0 Release.
+
+---
+
+## Section E: Future Release Backlog (V1.2 onward)
+
+### V1.2 — Planning
+- [ ] **`TASK-V12-001` — Daily Study Schedule & Time Blocking** (`BACKLOG`, P2)
+- [ ] **`TASK-V12-002` — Stopwatch & Study-Hour Logging per Topic** (`BACKLOG`, P2)
+- [ ] **`TASK-V12-003` — Calendar View for Target Milestones** (`BACKLOG`, P2)
+
+### V1.3 — Analytics
+- [ ] **`TASK-V13-001` — Study Streaks & Daily Consistency Counter** (`BACKLOG`, P2)
+- [ ] **`TASK-V13-002` — Phase Burndown & Velocity Charts** (`BACKLOG`, P2)
+- [ ] **`TASK-V13-003` — Monthly Study Hours Distribution** (`BACKLOG`, P3)
+
+### V1.4 — Projects & Resources
+- [ ] **`TASK-V14-001` — Topic Learning Resource Shelf (Books, Course URLs, PDFs)** (`BACKLOG`, P2)
+- [ ] **`TASK-V14-002` — Practice Project Tracker with GitHub Links** (`BACKLOG`, P2)
+
+### V2.0 — Local AI Features
+- [ ] **`TASK-V20-001` — Offline LLM Study Planner (Ollama Integration)** (`BACKLOG`, P2)
+- [ ] **`TASK-V20-002` — Automated Flashcard & Quiz Generation from Notes** (`BACKLOG`, P2)
+- [ ] **`TASK-V20-003` — AI Note Summarizer & Concept Explainer** (`BACKLOG`, P2)
+
+### V2.x — Document Intelligence
+- [ ] **`TASK-V2X-001` — Local Textbook & Paper PDF Q&A with RAG** (`BACKLOG`, P2)
+
+### V3.0 — Cloud & Sync
+- [ ] **`TASK-V30-001` — End-to-End Encrypted Multi-Device Sync** (`BACKLOG`, P3)
+- [ ] **`TASK-V30-002` — Automated Local & Cloud Encrypted Backups** (`BACKLOG`, P3)
+
+### General Unscheduled Backlog
+- [ ] **`TASK-GEN-001` — Pomodoro Focus Mode with ambient audio** (`BACKLOG`, P3)
+- [ ] **`TASK-GEN-002` — Spaced Repetition Flashcards (SM-2 Algorithm)** (`BACKLOG`, P3)
+- [ ] **`TASK-GEN-003` — Gamification (XP, Levels, Completion Badges)** (`BACKLOG`, P3)
+- [ ] **`TASK-GEN-004` — Roadmap Import/Export (JSON, Markdown, CSV)** (`BACKLOG`, P3)
