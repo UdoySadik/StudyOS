@@ -12,6 +12,16 @@ class RoadmapPage extends ConsumerStatefulWidget {
 }
 
 class _RoadmapPageState extends ConsumerState<RoadmapPage> {
+  final _searchController = TextEditingController();
+  String _searchQuery = '';
+  bool _isCompactView = false;
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     final roadmapsAsync = ref.watch(roadmapNotifierProvider);
@@ -21,52 +31,146 @@ class _RoadmapPageState extends ConsumerState<RoadmapPage> {
       body: roadmapsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('Error: $e')),
-        data: (roadmaps) => Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Page header
-            Padding(
-              padding: const EdgeInsets.fromLTRB(28, 28, 28, 0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'Roadmap Manager',
-                    style: TextStyle(
-                      color: AppColors.textDarkPrimary,
-                      fontSize: 24,
-                      fontWeight: FontWeight.w700,
+        data: (roadmaps) {
+          final filteredRoadmaps = _searchQuery.isEmpty
+              ? roadmaps
+              : roadmaps.where((r) =>
+                  r.title.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+                  (r.description?.toLowerCase().contains(_searchQuery.toLowerCase()) ?? false)
+                ).toList();
+
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Page header
+              Padding(
+                padding: const EdgeInsets.fromLTRB(28, 28, 28, 0),
+                child: Row(
+                  children: [
+                    const Text(
+                      'Roadmap Manager',
+                      style: TextStyle(
+                        color: AppColors.textDarkPrimary,
+                        fontSize: 24,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const Spacer(),
+                    // Instant Search Filter Bar
+                    Container(
+                      width: 240,
+                      height: 38,
+                      decoration: BoxDecoration(
+                        color: AppColors.darkCard,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: AppColors.darkBorder),
+                      ),
+                      child: TextField(
+                        controller: _searchController,
+                        onChanged: (val) => setState(() => _searchQuery = val.trim()),
+                        style: const TextStyle(color: AppColors.textDarkPrimary, fontSize: 13),
+                        decoration: InputDecoration(
+                          hintText: 'Search roadmaps...',
+                          hintStyle: const TextStyle(color: AppColors.textDarkMuted, fontSize: 13),
+                          prefixIcon: const Icon(Icons.search, size: 18, color: AppColors.textDarkMuted),
+                          suffixIcon: _searchQuery.isNotEmpty
+                              ? IconButton(
+                                  icon: const Icon(Icons.close, size: 16, color: AppColors.textDarkMuted),
+                                  onPressed: () {
+                                    _searchController.clear();
+                                    setState(() => _searchQuery = '');
+                                  },
+                                )
+                              : null,
+                          border: InputBorder.none,
+                          contentPadding: const EdgeInsets.symmetric(vertical: 9),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    // View Mode Switcher: Cards vs Compact Tree
+                    Container(
+                      height: 38,
+                      decoration: BoxDecoration(
+                        color: AppColors.darkCard,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: AppColors.darkBorder),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.view_agenda_outlined, size: 16),
+                            color: !_isCompactView ? AppColors.primary : AppColors.textDarkMuted,
+                            tooltip: 'Spacious Cards',
+                            onPressed: () => setState(() => _isCompactView = false),
+                          ),
+                          Container(width: 1, height: 20, color: AppColors.darkBorder),
+                          IconButton(
+                            icon: const Icon(Icons.account_tree_outlined, size: 16),
+                            color: _isCompactView ? AppColors.primary : AppColors.textDarkMuted,
+                            tooltip: 'Compact Tree View',
+                            onPressed: () => setState(() => _isCompactView = true),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    ElevatedButton.icon(
+                      onPressed: () => _showCreateRoadmapDialog(context),
+                      icon: const Icon(Icons.add, size: 16),
+                      label: const Text('New Roadmap'),
+                    ),
+                  ],
+                ),
+              ),
+
+              if (roadmaps.isEmpty)
+                const Expanded(
+                  child: Center(
+                    child: Text(
+                      'No roadmaps yet. Create one to get started!',
+                      style: TextStyle(color: AppColors.textDarkSecondary),
                     ),
                   ),
-                  ElevatedButton.icon(
-                    onPressed: () => _showCreateRoadmapDialog(context),
-                    icon: const Icon(Icons.add, size: 16),
-                    label: const Text('New Roadmap'),
+                )
+              else if (filteredRoadmaps.isEmpty)
+                Expanded(
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.search_off, size: 48, color: AppColors.textDarkMuted),
+                        const SizedBox(height: 12),
+                        Text(
+                          'No roadmaps matching "$_searchQuery"',
+                          style: const TextStyle(color: AppColors.textDarkSecondary, fontSize: 14),
+                        ),
+                      ],
+                    ),
                   ),
-                ],
-              ),
-            ),
-
-            if (roadmaps.isEmpty)
-              const Expanded(
-                child: Center(
-                  child: Text(
-                    'No roadmaps yet. Create one to get started!',
-                    style: TextStyle(color: AppColors.textDarkSecondary),
+                )
+              else if (_isCompactView)
+                Expanded(
+                  child: ListView.builder(
+                    padding: const EdgeInsets.all(28),
+                    itemCount: filteredRoadmaps.length,
+                    itemBuilder: (context, index) =>
+                        _CompactRoadmapTreeCard(roadmap: filteredRoadmaps[index]),
+                  ),
+                )
+              else
+                Expanded(
+                  child: ListView.builder(
+                    padding: const EdgeInsets.all(28),
+                    itemCount: filteredRoadmaps.length,
+                    itemBuilder: (context, index) =>
+                        _RoadmapCard(roadmap: filteredRoadmaps[index]),
                   ),
                 ),
-              )
-            else
-              Expanded(
-                child: ListView.builder(
-                  padding: const EdgeInsets.all(28),
-                  itemCount: roadmaps.length,
-                  itemBuilder: (context, index) =>
-                      _RoadmapCard(roadmap: roadmaps[index]),
-                ),
-              ),
-          ],
-        ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -115,6 +219,294 @@ class _RoadmapPageState extends ConsumerState<RoadmapPage> {
             },
             child: const Text('Create'),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Compact Tree View Components ─────────────────────────────────────────────
+
+class _CompactRoadmapTreeCard extends ConsumerStatefulWidget {
+  final RoadmapModel roadmap;
+  const _CompactRoadmapTreeCard({required this.roadmap});
+
+  @override
+  ConsumerState<_CompactRoadmapTreeCard> createState() => _CompactRoadmapTreeCardState();
+}
+
+class _CompactRoadmapTreeCardState extends ConsumerState<_CompactRoadmapTreeCard> {
+  bool _expanded = true;
+
+  @override
+  Widget build(BuildContext context) {
+    final phasesAsync = ref.watch(phaseNotifierProvider(widget.roadmap.id));
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: AppColors.darkCard,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppColors.darkBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Roadmap header row (compact)
+          InkWell(
+            onTap: () => setState(() => _expanded = !_expanded),
+            borderRadius: BorderRadius.circular(8),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              child: Row(
+                children: [
+                  Icon(
+                    _expanded ? Icons.keyboard_arrow_down : Icons.keyboard_arrow_right,
+                    color: AppColors.textDarkSecondary,
+                    size: 18,
+                  ),
+                  const SizedBox(width: 6),
+                  const Icon(Icons.folder_open, color: AppColors.primary, size: 16),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      widget.roadmap.title,
+                      style: const TextStyle(
+                        color: AppColors.textDarkPrimary,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  _RoadmapActions(roadmap: widget.roadmap),
+                ],
+              ),
+            ),
+          ),
+          if (_expanded)
+            phasesAsync.when(
+              loading: () => const Padding(
+                padding: EdgeInsets.all(8),
+                child: LinearProgressIndicator(minHeight: 2),
+              ),
+              error: (e, _) => Padding(
+                padding: const EdgeInsets.all(8),
+                child: Text('Error: $e', style: const TextStyle(color: AppColors.error, fontSize: 12)),
+              ),
+              data: (phases) => Column(
+                children: [
+                  const Divider(height: 1, color: AppColors.darkBorder),
+                  ...phases.map((phase) => _CompactPhaseNode(phase: phase)),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(28, 4, 14, 8),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: TextButton.icon(
+                        onPressed: () => _showAddPhaseDialog(context, widget.roadmap.id),
+                        icon: const Icon(Icons.add, size: 13),
+                        label: const Text('Add Phase', style: TextStyle(fontSize: 11)),
+                        style: TextButton.styleFrom(
+                          visualDensity: VisualDensity.compact,
+                          foregroundColor: AppColors.textDarkSecondary,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  void _showAddPhaseDialog(BuildContext context, int roadmapId) {
+    final ctrl = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.darkCard,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        title: const Text('Add Phase', style: TextStyle(color: AppColors.textDarkPrimary)),
+        content: TextField(
+          controller: ctrl,
+          style: const TextStyle(color: AppColors.textDarkPrimary),
+          decoration: const InputDecoration(labelText: 'Phase title'),
+          autofocus: true,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel', style: TextStyle(color: AppColors.textDarkSecondary)),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              if (ctrl.text.trim().isEmpty) return;
+              await ref.read(phaseNotifierProvider(roadmapId).notifier).addPhase(ctrl.text.trim());
+              if (ctx.mounted) Navigator.pop(ctx);
+            },
+            child: const Text('Add'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CompactPhaseNode extends ConsumerStatefulWidget {
+  final PhaseModel phase;
+  const _CompactPhaseNode({required this.phase});
+
+  @override
+  ConsumerState<_CompactPhaseNode> createState() => _CompactPhaseNodeState();
+}
+
+class _CompactPhaseNodeState extends ConsumerState<_CompactPhaseNode> {
+  bool _expanded = true;
+
+  @override
+  Widget build(BuildContext context) {
+    final topicsAsync = ref.watch(topicNotifierProvider(widget.phase.id));
+
+    return Column(
+      children: [
+        InkWell(
+          onTap: () => setState(() => _expanded = !_expanded),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(24, 6, 14, 6),
+            child: Row(
+              children: [
+                Icon(
+                  _expanded ? Icons.keyboard_arrow_down : Icons.keyboard_arrow_right,
+                  color: AppColors.textDarkMuted,
+                  size: 15,
+                ),
+                const SizedBox(width: 4),
+                const Icon(Icons.subdirectory_arrow_right, color: AppColors.accent, size: 14),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    widget.phase.title,
+                    style: const TextStyle(
+                      color: AppColors.textDarkPrimary,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+                _PhaseActions(phase: widget.phase),
+              ],
+            ),
+          ),
+        ),
+        if (_expanded)
+          topicsAsync.when(
+            loading: () => const SizedBox(),
+            error: (e, _) => const SizedBox(),
+            data: (topics) => Column(
+              children: [
+                ...topics.map((t) => _CompactTopicRow(topic: t, phaseId: widget.phase.id)),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(48, 2, 14, 4),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: TextButton.icon(
+                      onPressed: () => _showAddTopicDialog(context, widget.phase.id),
+                      icon: const Icon(Icons.add, size: 12),
+                      label: const Text('Add Topic', style: TextStyle(fontSize: 11)),
+                      style: TextButton.styleFrom(
+                        visualDensity: VisualDensity.compact,
+                        foregroundColor: AppColors.textDarkMuted,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+
+  void _showAddTopicDialog(BuildContext context, int phaseId) {
+    final ctrl = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.darkCard,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        title: const Text('Add Topic', style: TextStyle(color: AppColors.textDarkPrimary)),
+        content: TextField(
+          controller: ctrl,
+          style: const TextStyle(color: AppColors.textDarkPrimary),
+          decoration: const InputDecoration(labelText: 'Topic title'),
+          autofocus: true,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel', style: TextStyle(color: AppColors.textDarkSecondary)),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              if (ctrl.text.trim().isEmpty) return;
+              await ref.read(topicNotifierProvider(phaseId).notifier).addTopic(ctrl.text.trim());
+              if (ctx.mounted) Navigator.pop(ctx);
+            },
+            child: const Text('Add'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CompactTopicRow extends ConsumerWidget {
+  final TopicModel topic;
+  final int phaseId;
+  const _CompactTopicRow({required this.topic, required this.phaseId});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(48, 2, 14, 2),
+      child: Row(
+        children: [
+          GestureDetector(
+            onTap: () async {
+              await ref
+                  .read(topicNotifierProvider(phaseId).notifier)
+                  .toggleComplete(topic.id, !topic.isCompleted);
+            },
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 150),
+              width: 15,
+              height: 15,
+              decoration: BoxDecoration(
+                color: topic.isCompleted ? AppColors.success : Colors.transparent,
+                border: Border.all(
+                  color: topic.isCompleted ? AppColors.success : AppColors.textDarkMuted,
+                  width: 1.2,
+                ),
+                borderRadius: BorderRadius.circular(3),
+              ),
+              child: topic.isCompleted
+                  ? const Icon(Icons.check, size: 10, color: Colors.white)
+                  : null,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              topic.title,
+              style: TextStyle(
+                color: topic.isCompleted ? AppColors.textDarkMuted : AppColors.textDarkPrimary,
+                fontSize: 12,
+                decoration: topic.isCompleted ? TextDecoration.lineThrough : null,
+              ),
+            ),
+          ),
+          _TopicActions(topic: topic, phaseId: phaseId),
         ],
       ),
     );

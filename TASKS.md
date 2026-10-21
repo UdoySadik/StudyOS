@@ -122,23 +122,22 @@
 
 ---
 
-## Section D: Proposed V1.1 — Productivity Improvements
+## Section D: Completed V1.1 — Productivity Improvements
 
-- [ ] **`TASK-V11-001` — Roadmap & Notes Full-Text Search**
-  - **Status:** `BACKLOG` | **Priority:** P2 | **Milestone:** V1.1
-  - **Description:** Add instant search filter bar in Roadmap and Notes explorers.
-  - **Dependencies:** V1.0 Release.
-  - **Acceptance Criteria:** Typing a keyword highlights matching topics and notes in realtime.
+- [x] **`TASK-V11-001` — Roadmap & Notes Full-Text Search**
+  - **Status:** `DONE-VERIFIED` | **Priority:** P2 | **Milestone:** V1.1
+  - **Description:** Added instant search filter bar in Roadmap and Notes explorers with case-insensitive backend query support (`/roadmaps/?q=` and `/notes/?q=`).
+  - **Evidence:** `backend/routers/roadmaps.py`, `backend/routers/notes.py`, `roadmap_page.dart:58-88`, `notes_page.dart:79-114`. Verified via automated tests `test_search_endpoints()` in `tests/test_routers.py`.
 
-- [ ] **`TASK-V11-002` — Global Desktop Keyboard Shortcuts**
-  - **Status:** `BACKLOG` | **Priority:** P2 | **Milestone:** V1.1
-  - **Description:** Implement `LogicalKeySet` listeners for `Ctrl+1` (Dashboard), `Ctrl+2` (Roadmap), `Ctrl+3` (Goals), `Ctrl+4` (Notes), `Ctrl+S` (Save note).
-  - **Dependencies:** V1.0 Release.
+- [x] **`TASK-V11-002` — Global Desktop Keyboard Shortcuts**
+  - **Status:** `DONE-VERIFIED` | **Priority:** P2 | **Milestone:** V1.1
+  - **Description:** Implemented `CallbackShortcuts` and `SingleActivator` listeners for `Ctrl+1` (Dashboard), `Ctrl+2` (Roadmap), `Ctrl+3` (Goals), `Ctrl+4` (Notes), `Ctrl+5` (Settings), along with keyboard shortcut badges and hover tooltips on the sidebar navigation items.
+  - **Evidence:** `frontend/lib/shared/widgets/app_shell.dart:55-85, 215-265`. Verified via `flutter test`.
 
-- [ ] **`TASK-V11-003` — Compact Tree View Mode**
-  - **Status:** `BACKLOG` | **Priority:** P3 | **Milestone:** V1.1
-  - **Description:** Toggle between spacious card view and compact tree table view in Roadmap Manager.
-  - **Dependencies:** V1.0 Release.
+- [x] **`TASK-V11-003` — Compact Tree View Mode**
+  - **Status:** `DONE-VERIFIED` | **Priority:** P3 | **Milestone:** V1.1
+  - **Description:** Added a view mode toggle in Roadmap Manager allowing instant switching between spacious cards and a compact hierarchical tree view with inline phase/topic completion nodes and action triggers.
+  - **Evidence:** `frontend/lib/features/roadmap/presentation/roadmap_page.dart:88-115, 226-515`. Verified via `flutter analyze` (0 issues).
 
 ---
 

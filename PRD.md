@@ -203,10 +203,10 @@ The following table reflects the **complete, audited status** of all V1.0 featur
 - Eliminate Flutter 3.27+ deprecation warnings.
 - Complete automated pytest router test suite.
 
-### Proposed V1.1 — Productivity Improvements
-- Roadmap full-text search.
-- Global desktop keyboard shortcuts (`Ctrl+N` for new note, `Ctrl+D` for dashboard).
-- Compact tree view toggle for dense roadmaps.
+### Completed: V1.1 — Productivity Improvements (DONE-VERIFIED)
+- Roadmap and Notes full-text search with instant filtering and backend ILIKE query support (`TASK-V11-001`).
+- Global desktop keyboard shortcuts (`Ctrl+1` through `Ctrl+5`) and sidebar badges (`TASK-V11-002`).
+- Compact tree view toggle for dense hierarchical roadmap view (`TASK-V11-003`).
 
 ### Proposed V1.2 — Planning
 - Daily and weekly calendar study planner.

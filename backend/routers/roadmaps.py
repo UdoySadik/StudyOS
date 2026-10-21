@@ -5,14 +5,18 @@ from sqlalchemy.orm import Session
 from database import get_db
 from models.roadmap import Roadmap
 from schemas.roadmap import RoadmapCreate, RoadmapUpdate, RoadmapResponse
-from typing import List
+from typing import List, Optional
 
 router = APIRouter(prefix="/roadmaps", tags=["roadmaps"])
 
 
 @router.get("/", response_model=List[RoadmapResponse])
-def list_roadmaps(db: Session = Depends(get_db)):
-    return db.query(Roadmap).order_by(Roadmap.created_at.desc()).all()
+def list_roadmaps(q: Optional[str] = None, db: Session = Depends(get_db)):
+    query = db.query(Roadmap)
+    if q and q.strip():
+        term = f"%{q.strip()}%"
+        query = query.filter((Roadmap.title.ilike(term)) | (Roadmap.description.ilike(term)))
+    return query.order_by(Roadmap.created_at.desc()).all()
 
 
 @router.post("/", response_model=RoadmapResponse, status_code=status.HTTP_201_CREATED)

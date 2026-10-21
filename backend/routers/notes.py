@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Optional
 from database import get_db
 from models.note import Note
 from models.topic import Topic
@@ -12,9 +12,13 @@ router = APIRouter(prefix="/notes", tags=["notes"])
 
 
 @router.get("/", response_model=List[NoteResponse])
-def list_notes_with_content(db: Session = Depends(get_db)):
-    """Return all notes that have non-empty content."""
-    return db.query(Note).filter(Note.content != "").all()
+def list_notes_with_content(q: Optional[str] = None, db: Session = Depends(get_db)):
+    """Return all notes that have non-empty content, optionally filtered by keyword."""
+    query = db.query(Note).filter(Note.content != "")
+    if q and q.strip():
+        term = f"%{q.strip()}%"
+        query = query.filter(Note.content.ilike(term))
+    return query.all()
 
 
 @router.get("/topic/{topic_id}", response_model=NoteResponse)

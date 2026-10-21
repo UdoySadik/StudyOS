@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/theme/app_theme.dart';
@@ -9,12 +10,14 @@ class _NavItem {
   final IconData icon;
   final IconData activeIcon;
   final String route;
+  final String shortcut;
 
   const _NavItem({
     required this.label,
     required this.icon,
     required this.activeIcon,
     required this.route,
+    required this.shortcut,
   });
 }
 
@@ -24,34 +27,39 @@ const _navItems = [
     icon: Icons.dashboard_outlined,
     activeIcon: Icons.dashboard,
     route: '/dashboard',
+    shortcut: 'Ctrl+1',
   ),
   _NavItem(
     label: 'Roadmap',
     icon: Icons.map_outlined,
     activeIcon: Icons.map,
     route: '/roadmap',
+    shortcut: 'Ctrl+2',
   ),
   _NavItem(
     label: 'Goals',
     icon: Icons.flag_outlined,
     activeIcon: Icons.flag,
     route: '/goals',
+    shortcut: 'Ctrl+3',
   ),
   _NavItem(
     label: 'Notes',
     icon: Icons.sticky_note_2_outlined,
     activeIcon: Icons.sticky_note_2,
     route: '/notes',
+    shortcut: 'Ctrl+4',
   ),
   _NavItem(
     label: 'Settings',
     icon: Icons.settings_outlined,
     activeIcon: Icons.settings,
     route: '/settings',
+    shortcut: 'Ctrl+5',
   ),
 ];
 
-/// App shell — persistent sidebar + content area
+/// App shell — persistent sidebar + content area + desktop keyboard navigation
 class AppShell extends ConsumerWidget {
   final Widget child;
   const AppShell({super.key, required this.child});
@@ -60,14 +68,26 @@ class AppShell extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final location = GoRouterState.of(context).uri.toString();
 
-    return Scaffold(
-      backgroundColor: AppColors.darkBg,
-      body: Row(
-        children: [
-          _Sidebar(currentLocation: location),
-          const VerticalDivider(width: 1),
-          Expanded(child: child),
-        ],
+    return CallbackShortcuts(
+      bindings: {
+        const SingleActivator(LogicalKeyboardKey.digit1, control: true): () => context.go('/dashboard'),
+        const SingleActivator(LogicalKeyboardKey.digit2, control: true): () => context.go('/roadmap'),
+        const SingleActivator(LogicalKeyboardKey.digit3, control: true): () => context.go('/goals'),
+        const SingleActivator(LogicalKeyboardKey.digit4, control: true): () => context.go('/notes'),
+        const SingleActivator(LogicalKeyboardKey.digit5, control: true): () => context.go('/settings'),
+      },
+      child: Focus(
+        autofocus: true,
+        child: Scaffold(
+          backgroundColor: AppColors.darkBg,
+          body: Row(
+            children: [
+              _Sidebar(currentLocation: location),
+              const VerticalDivider(width: 1),
+              Expanded(child: child),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -169,55 +189,74 @@ class _SidebarNavItemState extends State<_SidebarNavItem> {
   Widget build(BuildContext context) {
     final isActive = widget.isActive;
 
-    return MouseRegion(
-      onEnter: (_) => setState(() => _hovered = true),
-      onExit: (_) => setState(() => _hovered = false),
-      cursor: SystemMouseCursors.click,
-      child: GestureDetector(
-        onTap: () => context.go(widget.item.route),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 150),
-          margin: const EdgeInsets.only(bottom: 4),
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-          decoration: BoxDecoration(
-            color: isActive
-                ? AppColors.primary.withValues(alpha: 0.15)
-                : _hovered
-                    ? AppColors.darkCard
-                    : Colors.transparent,
-            borderRadius: BorderRadius.circular(8),
-            border: isActive
-                ? Border.all(color: AppColors.primary.withValues(alpha: 0.3), width: 1)
-                : null,
-          ),
-          child: Row(
-            children: [
-              Icon(
-                isActive ? widget.item.activeIcon : widget.item.icon,
-                size: 18,
-                color: isActive ? AppColors.primary : AppColors.textDarkSecondary,
-              ),
-              const SizedBox(width: 12),
-              Text(
-                widget.item.label,
-                style: TextStyle(
+    return Tooltip(
+      message: '${widget.item.label} (${widget.item.shortcut})',
+      waitDuration: const Duration(milliseconds: 400),
+      child: MouseRegion(
+        onEnter: (_) => setState(() => _hovered = true),
+        onExit: (_) => setState(() => _hovered = false),
+        cursor: SystemMouseCursors.click,
+        child: GestureDetector(
+          onTap: () => context.go(widget.item.route),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 150),
+            margin: const EdgeInsets.only(bottom: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: isActive
+                  ? AppColors.primary.withValues(alpha: 0.15)
+                  : _hovered
+                      ? AppColors.darkCard
+                      : Colors.transparent,
+              borderRadius: BorderRadius.circular(8),
+              border: isActive
+                  ? Border.all(color: AppColors.primary.withValues(alpha: 0.3), width: 1)
+                  : null,
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  isActive ? widget.item.activeIcon : widget.item.icon,
+                  size: 18,
                   color: isActive ? AppColors.primary : AppColors.textDarkSecondary,
-                  fontSize: 14,
-                  fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
                 ),
-              ),
-              if (isActive) ...[
-                const Spacer(),
+                Expanded(
+                  child: Text(
+                    widget.item.label,
+                    style: TextStyle(
+                      color: isActive ? AppColors.primary : AppColors.textDarkSecondary,
+                      fontSize: 13,
+                      fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                const SizedBox(width: 8),
                 Container(
-                  width: 4,
-                  height: 4,
-                  decoration: const BoxDecoration(
-                    color: AppColors.primary,
-                    shape: BoxShape.circle,
+                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: isActive
+                        ? AppColors.primary.withValues(alpha: 0.2)
+                        : AppColors.darkCard.withValues(alpha: 0.8),
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(
+                      color: isActive
+                          ? AppColors.primary.withValues(alpha: 0.4)
+                          : AppColors.darkBorder.withValues(alpha: 0.5),
+                    ),
+                  ),
+                  child: Text(
+                    widget.item.shortcut,
+                    style: TextStyle(
+                      color: isActive ? AppColors.primary : AppColors.textDarkMuted,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
               ],
-            ],
+            ),
           ),
         ),
       ),

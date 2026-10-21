@@ -17,18 +17,35 @@ class _NotesPageState extends ConsumerState<NotesPage> {
   int? _selectedTopicId;
   String? _selectedTopicTitle;
   final _noteController = TextEditingController();
+  final _searchController = TextEditingController();
+  String _searchQuery = '';
   bool _isEditing = true;
   bool _isSaving = false;
 
   @override
   void dispose() {
     _noteController.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final selectedRoadmapId = ref.watch(selectedRoadmapIdProvider);
+    final roadmapsAsync = ref.watch(roadmapNotifierProvider);
+
+    // Auto-select first roadmap if none is selected yet
+    if (selectedRoadmapId == null) {
+      roadmapsAsync.whenData((roadmaps) {
+        if (roadmaps.isNotEmpty) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted && ref.read(selectedRoadmapIdProvider) == null) {
+              ref.read(selectedRoadmapIdProvider.notifier).state = roadmaps.first.id;
+            }
+          });
+        }
+      });
+    }
 
     return Scaffold(
       backgroundColor: AppColors.darkBg,
@@ -51,11 +68,12 @@ class _NotesPageState extends ConsumerState<NotesPage> {
   Widget _buildTopicExplorer(int? selectedRoadmapId) {
     if (selectedRoadmapId == null) {
       return Container(
-        width: 260,
-        padding: const EdgeInsets.all(16),
+        width: 280,
+        padding: const EdgeInsets.all(24),
+        color: AppColors.sidebarBg,
         child: const Center(
           child: Text(
-            'Select a roadmap to browse topics.',
+            'Select or create a roadmap to browse topics.',
             textAlign: TextAlign.center,
             style: TextStyle(color: AppColors.textDarkSecondary),
           ),
@@ -64,6 +82,8 @@ class _NotesPageState extends ConsumerState<NotesPage> {
     }
 
     final phasesAsync = ref.watch(phaseNotifierProvider(selectedRoadmapId));
+    final allNotesAsync = ref.watch(allNotesProvider);
+    final allNotes = allNotesAsync.asData?.value ?? [];
 
     return Container(
       width: 280,
@@ -72,13 +92,46 @@ class _NotesPageState extends ConsumerState<NotesPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Padding(
-            padding: EdgeInsets.fromLTRB(16, 24, 16, 12),
+            padding: EdgeInsets.fromLTRB(16, 20, 16, 8),
             child: Text(
               'Topics & Notes',
               style: TextStyle(
                 color: AppColors.textDarkPrimary,
                 fontSize: 16,
                 fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+          // Search input bar
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+            child: Container(
+              height: 36,
+              decoration: BoxDecoration(
+                color: AppColors.darkCard,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: AppColors.darkBorder),
+              ),
+              child: TextField(
+                controller: _searchController,
+                onChanged: (val) => setState(() => _searchQuery = val.trim()),
+                style: const TextStyle(color: AppColors.textDarkPrimary, fontSize: 12),
+                decoration: InputDecoration(
+                  hintText: 'Search topics or note content...',
+                  hintStyle: const TextStyle(color: AppColors.textDarkMuted, fontSize: 11),
+                  prefixIcon: const Icon(Icons.search, size: 16, color: AppColors.textDarkMuted),
+                  suffixIcon: _searchQuery.isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(Icons.close, size: 14, color: AppColors.textDarkMuted),
+                          onPressed: () {
+                            _searchController.clear();
+                            setState(() => _searchQuery = '');
+                          },
+                        )
+                      : null,
+                  border: InputBorder.none,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 8),
+                ),
               ),
             ),
           ),
@@ -97,7 +150,7 @@ class _NotesPageState extends ConsumerState<NotesPage> {
                   itemCount: phases.length,
                   itemBuilder: (context, index) {
                     final phase = phases[index];
-                    return _buildPhaseGroup(phase);
+                    return _buildPhaseGroup(phase, allNotes);
                   },
                 );
               },
@@ -108,58 +161,97 @@ class _NotesPageState extends ConsumerState<NotesPage> {
     );
   }
 
-  Widget _buildPhaseGroup(PhaseModel phase) {
+  Widget _buildPhaseGroup(PhaseModel phase, List<dynamic> allNotes) {
     final topicsAsync = ref.watch(topicNotifierProvider(phase.id));
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 6),
-          child: Text(
-            phase.title.toUpperCase(),
-            style: const TextStyle(
-              color: AppColors.textDarkMuted,
-              fontSize: 10,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 1.0,
-            ),
-          ),
-        ),
         topicsAsync.when(
           loading: () => const SizedBox(),
           error: (e, _) => const SizedBox(),
-          data: (topics) => Column(
-            children: topics.map((topic) {
-              final isSelected = _selectedTopicId == topic.id;
-              return ListTile(
-                dense: true,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-                title: Text(
-                  topic.title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: isSelected ? AppColors.primary : AppColors.textDarkSecondary,
-                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+          data: (topics) {
+            // Build set of topic IDs where note content contains query
+            final noteMatchedTopicIds = <int>{};
+            if (_searchQuery.isNotEmpty) {
+              final queryLower = _searchQuery.toLowerCase();
+              for (final note in allNotes) {
+                if (note.content != null &&
+                    note.content.toString().toLowerCase().contains(queryLower)) {
+                  noteMatchedTopicIds.add(note.topicId as int);
+                }
+              }
+            }
+
+            final filteredTopics = _searchQuery.isEmpty
+                ? topics
+                : topics.where((t) {
+                    final titleMatch = t.title.toLowerCase().contains(_searchQuery.toLowerCase());
+                    final noteMatch = noteMatchedTopicIds.contains(t.id);
+                    return titleMatch || noteMatch;
+                  }).toList();
+
+            if (_searchQuery.isNotEmpty && filteredTopics.isEmpty) {
+              return const SizedBox();
+            }
+
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 6),
+                  child: Text(
+                    phase.title.toUpperCase(),
+                    style: const TextStyle(
+                      color: AppColors.textDarkMuted,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 1.0,
+                    ),
                   ),
                 ),
-                leading: Icon(
-                  Icons.sticky_note_2_outlined,
-                  size: 16,
-                  color: isSelected ? AppColors.primary : AppColors.textDarkMuted,
-                ),
-                onTap: () {
-                  setState(() {
-                    _selectedTopicId = topic.id;
-                    _selectedTopicTitle = topic.title;
-                  });
-                },
-              );
-            }).toList(),
-          ),
+                ...filteredTopics.map((topic) {
+                  final isSelected = _selectedTopicId == topic.id;
+                  final matchedInNoteOnly = _searchQuery.isNotEmpty &&
+                      !topic.title.toLowerCase().contains(_searchQuery.toLowerCase()) &&
+                      noteMatchedTopicIds.contains(topic.id);
+
+                  return ListTile(
+                    dense: true,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                    title: Text(
+                      topic.title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: isSelected ? AppColors.primary : AppColors.textDarkSecondary,
+                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                      ),
+                    ),
+                    subtitle: matchedInNoteOnly
+                        ? const Text(
+                            'Matched inside note',
+                            style: TextStyle(color: AppColors.accent, fontSize: 10),
+                          )
+                        : null,
+                    leading: Icon(
+                      Icons.sticky_note_2_outlined,
+                      size: 16,
+                      color: isSelected ? AppColors.primary : AppColors.textDarkMuted,
+                    ),
+                    onTap: () {
+                      setState(() {
+                        _selectedTopicId = topic.id;
+                        _selectedTopicTitle = topic.title;
+                      });
+                    },
+                  );
+                }),
+                const SizedBox(height: 8),
+              ],
+            );
+          },
         ),
-        const SizedBox(height: 8),
       ],
     );
   }

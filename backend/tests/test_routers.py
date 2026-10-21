@@ -153,3 +153,36 @@ def test_404_error_handling():
     assert client.get("/notes/topic/999999").status_code == 404
     # Non-existent dashboard
     assert client.get("/dashboard/999999").status_code == 404
+
+
+def test_search_endpoints():
+    client.post("/system/reset")
+
+    # Create roadmaps
+    rm1 = client.post("/roadmaps/", json={"title": "Golang Microservices", "description": "Backend services"}).json()
+    rm2 = client.post("/roadmaps/", json={"title": "Rust Systems", "description": "Embedded and kernels"}).json()
+
+    # Search roadmaps
+    search_rust = client.get("/roadmaps/?q=rust").json()
+    assert len(search_rust) == 1
+    assert search_rust[0]["id"] == rm2["id"]
+
+    search_services = client.get("/roadmaps/?q=services").json()
+    assert len(search_services) == 1
+    assert search_services[0]["id"] == rm1["id"]
+
+    # Create phase, topic and notes
+    ph = client.post("/phases/", json={"roadmap_id": rm2["id"], "title": "Phase 1"}).json()
+    tp = client.post("/topics/", json={"phase_id": ph["id"], "title": "Concurrency"}).json()
+    client.put(f"/notes/topic/{tp['id']}", json={"content": "Mutex and Arc patterns for thread safety."})
+
+    # Search notes
+    notes_mutex = client.get("/notes/?q=mutex").json()
+    assert len(notes_mutex) == 1
+    assert "Mutex and Arc" in notes_mutex[0]["content"]
+
+    notes_nonexistent = client.get("/notes/?q=nonexistentword123").json()
+    assert len(notes_nonexistent) == 0
+
+    client.post("/system/reset")
+
