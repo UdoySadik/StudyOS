@@ -1,6 +1,7 @@
 import 'package:go_router/go_router.dart';
 import '../../features/dashboard/presentation/dashboard_page.dart';
 import '../../features/roadmap/presentation/roadmap_page.dart';
+import '../../features/schedule/presentation/schedule_page.dart';
 import '../../features/goals/presentation/goals_page.dart';
 import '../../features/notes/presentation/notes_page.dart';
 import '../../features/settings/presentation/settings_page.dart';
@@ -24,6 +25,13 @@ final GoRouter appRouter = GoRouter(
           name: 'roadmap',
           pageBuilder: (context, state) => const NoTransitionPage(
             child: RoadmapPage(),
+          ),
+        ),
+        GoRoute(
+          path: '/schedule',
+          name: 'schedule',
+          pageBuilder: (context, state) => const NoTransitionPage(
+            child: SchedulePage(),
           ),
         ),
         GoRoute(

@@ -37,25 +37,32 @@ const _navItems = [
     shortcut: 'Ctrl+2',
   ),
   _NavItem(
+    label: 'Schedule',
+    icon: Icons.schedule_outlined,
+    activeIcon: Icons.schedule,
+    route: '/schedule',
+    shortcut: 'Ctrl+3',
+  ),
+  _NavItem(
     label: 'Goals',
     icon: Icons.flag_outlined,
     activeIcon: Icons.flag,
     route: '/goals',
-    shortcut: 'Ctrl+3',
+    shortcut: 'Ctrl+4',
   ),
   _NavItem(
     label: 'Notes',
     icon: Icons.sticky_note_2_outlined,
     activeIcon: Icons.sticky_note_2,
     route: '/notes',
-    shortcut: 'Ctrl+4',
+    shortcut: 'Ctrl+5',
   ),
   _NavItem(
     label: 'Settings',
     icon: Icons.settings_outlined,
     activeIcon: Icons.settings,
     route: '/settings',
-    shortcut: 'Ctrl+5',
+    shortcut: 'Ctrl+6',
   ),
 ];
 
@@ -72,9 +79,10 @@ class AppShell extends ConsumerWidget {
       bindings: {
         const SingleActivator(LogicalKeyboardKey.digit1, control: true): () => context.go('/dashboard'),
         const SingleActivator(LogicalKeyboardKey.digit2, control: true): () => context.go('/roadmap'),
-        const SingleActivator(LogicalKeyboardKey.digit3, control: true): () => context.go('/goals'),
-        const SingleActivator(LogicalKeyboardKey.digit4, control: true): () => context.go('/notes'),
-        const SingleActivator(LogicalKeyboardKey.digit5, control: true): () => context.go('/settings'),
+        const SingleActivator(LogicalKeyboardKey.digit3, control: true): () => context.go('/schedule'),
+        const SingleActivator(LogicalKeyboardKey.digit4, control: true): () => context.go('/goals'),
+        const SingleActivator(LogicalKeyboardKey.digit5, control: true): () => context.go('/notes'),
+        const SingleActivator(LogicalKeyboardKey.digit6, control: true): () => context.go('/settings'),
       },
       child: Focus(
         autofocus: true,

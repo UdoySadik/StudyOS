@@ -208,9 +208,10 @@ The following table reflects the **complete, audited status** of all V1.0 featur
 - Global desktop keyboard shortcuts (`Ctrl+1` through `Ctrl+5`) and sidebar badges (`TASK-V11-002`).
 - Compact tree view toggle for dense hierarchical roadmap view (`TASK-V11-003`).
 
-### Proposed V1.2 — Planning
-- Daily and weekly calendar study planner.
-- Study-hour logging and time tracker.
+### Milestone V1.2 — Planning (In Progress)
+- **Daily Study Schedule & Time Blocking (`TASK-V12-001` - DONE-VERIFIED):** Hourly block planner, day navigator, progress bar, completion checkboxes.
+- **Stopwatch & Study-Hour Logging per Topic (`TASK-V12-002` - In Progress):** Active timer and elapsed study session logger.
+- **Calendar View for Target Milestones (`TASK-V12-003` - Backlog):** Monthly & weekly milestone overview.
 
 ### Proposed V1.3 — Analytics
 - Learning consistency streaks.

@@ -186,3 +186,65 @@ def test_search_endpoints():
 
     client.post("/system/reset")
 
+
+def test_schedule_endpoints():
+    client.post("/system/reset")
+
+    # 1. Create a roadmap & topic to link
+    rm = client.post("/roadmaps/", json={"title": "Algorithms", "description": "DS & Algo"}).json()
+    ph = client.post("/phases/", json={"roadmap_id": rm["id"], "title": "Phase 1"}).json()
+    tp = client.post("/topics/", json={"phase_id": ph["id"], "title": "Graph Traversal"}).json()
+
+    # 2. Create schedule block for today
+    block_res = client.post("/schedule/", json={
+        "scheduled_date": "2026-10-21",
+        "start_time": "09:00",
+        "end_time": "10:30",
+        "title": "Study BFS & DFS",
+        "topic_id": tp["id"],
+        "notes": "Solve 3 LeetCode problems"
+    })
+    assert block_res.status_code == 201
+    block = block_res.json()
+    assert block["title"] == "Study BFS & DFS"
+    assert block["is_completed"] is False
+    block_id = block["id"]
+
+    # 3. Create another schedule block for tomorrow
+    client.post("/schedule/", json={
+        "scheduled_date": "2026-10-22",
+        "start_time": "14:00",
+        "end_time": "15:30",
+        "title": "Review Dynamic Programming"
+    })
+
+    # 4. Filter by date
+    today_blocks = client.get("/schedule/?target_date=2026-10-21").json()
+    assert len(today_blocks) == 1
+    assert today_blocks[0]["id"] == block_id
+
+    tomorrow_blocks = client.get("/schedule/?target_date=2026-10-22").json()
+    assert len(tomorrow_blocks) == 1
+
+    all_blocks = client.get("/schedule/").json()
+    assert len(all_blocks) == 2
+
+    # 5. Toggle completion
+    comp_res = client.patch(f"/schedule/{block_id}/complete", json={"is_completed": True})
+    assert comp_res.status_code == 200
+    assert comp_res.json()["is_completed"] is True
+
+    # 6. Update block
+    update_res = client.patch(f"/schedule/{block_id}", json={"start_time": "09:30"})
+    assert update_res.status_code == 200
+    assert update_res.json()["start_time"] == "09:30"
+
+    # 7. Delete block
+    del_res = client.delete(f"/schedule/{block_id}")
+    assert del_res.status_code == 204
+    assert client.get(f"/schedule/{block_id}").status_code == 404
+
+    # 8. Clean reset
+    client.post("/system/reset")
+
+

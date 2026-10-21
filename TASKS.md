@@ -141,12 +141,19 @@
 
 ---
 
-## Section E: Future Release Backlog (V1.2 onward)
+## Section E: Milestone V1.2 — Planning (In Progress)
 
-### V1.2 — Planning
-- [ ] **`TASK-V12-001` — Daily Study Schedule & Time Blocking** (`BACKLOG`, P2)
+- [x] **`TASK-V12-001` — Daily Study Schedule & Time-Blocking**
+  - **Status:** `DONE-VERIFIED` | **Priority:** P2 | **Milestone:** V1.2 Planning
+  - **Description:** Implemented full backend CRUD API for `ScheduleBlock` (`GET /schedule/?target_date=`, `POST`, `PATCH`, `DELETE`) and desktop Flutter presentation (`schedule_page.dart`) with day navigator, time block cards, completion toggles, daily progress bar, and keyboard navigation (`Ctrl+3`).
+  - **Evidence:** `backend/models/schedule_block.py`, `backend/routers/schedule.py`, `frontend/lib/features/schedule/presentation/schedule_page.dart`. Verified via automated tests `test_schedule_endpoints()` (100% pass) and `flutter analyze` (0 issues).
+
 - [ ] **`TASK-V12-002` — Stopwatch & Study-Hour Logging per Topic** (`BACKLOG`, P2)
 - [ ] **`TASK-V12-003` — Calendar View for Target Milestones** (`BACKLOG`, P2)
+
+---
+
+## Section F: Future Release Backlog (V1.3 onward)
 
 ### V1.3 — Analytics
 - [ ] **`TASK-V13-001` — Study Streaks & Daily Consistency Counter** (`BACKLOG`, P2)

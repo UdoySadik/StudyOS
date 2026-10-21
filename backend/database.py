@@ -47,5 +47,5 @@ def get_db():
 def init_db():
     """Create all tables if they don't exist."""
     # Import all models so Base knows about them
-    from models import roadmap, phase, topic, subtopic, note, goal  # noqa: F401
+    from models import roadmap, phase, topic, subtopic, note, goal, schedule_block  # noqa: F401
     Base.metadata.create_all(bind=engine)
