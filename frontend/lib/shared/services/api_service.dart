@@ -19,6 +19,7 @@ class ApiService {
         connectTimeout: const Duration(seconds: 5),
         receiveTimeout: const Duration(seconds: 10),
         headers: {'Content-Type': 'application/json'},
+        validateStatus: (status) => status != null && status < 400,
       ),
     );
 

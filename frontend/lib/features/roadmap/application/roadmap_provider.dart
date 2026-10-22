@@ -5,7 +5,7 @@ import '../domain/roadmap_models.dart';
 // ── Providers ────────────────────────────────────────────────────────────────
 
 final roadmapsProvider = FutureProvider<List<RoadmapModel>>((ref) async {
-  final data = await ApiService().get('/roadmaps') as List<dynamic>;
+  final data = await ApiService().get('/roadmaps/') as List<dynamic>;
   return data.map((e) => RoadmapModel.fromJson(e as Map<String, dynamic>)).toList();
 });
 
@@ -31,12 +31,12 @@ final subtopicsProvider = FutureProvider.family<List<SubtopicModel>, int>((ref, 
 class RoadmapNotifier extends AsyncNotifier<List<RoadmapModel>> {
   @override
   Future<List<RoadmapModel>> build() async {
-    final data = await ApiService().get('/roadmaps') as List<dynamic>;
+    final data = await ApiService().get('/roadmaps/') as List<dynamic>;
     return data.map((e) => RoadmapModel.fromJson(e as Map<String, dynamic>)).toList();
   }
 
   Future<void> createRoadmap(String title, {String? description}) async {
-    await ApiService().post('/roadmaps', {'title': title, 'description': description});
+    await ApiService().post('/roadmaps/', {'title': title, 'description': description});
     ref.invalidateSelf();
   }
 
@@ -62,7 +62,7 @@ class PhaseNotifier extends FamilyAsyncNotifier<List<PhaseModel>, int> {
   }
 
   Future<void> addPhase(String title) async {
-    await ApiService().post('/phases', {'roadmap_id': arg, 'title': title});
+    await ApiService().post('/phases/', {'roadmap_id': arg, 'title': title});
     ref.invalidateSelf();
   }
 
@@ -88,7 +88,7 @@ class TopicNotifier extends FamilyAsyncNotifier<List<TopicModel>, int> {
   }
 
   Future<void> addTopic(String title) async {
-    await ApiService().post('/topics', {'phase_id': arg, 'title': title});
+    await ApiService().post('/topics/', {'phase_id': arg, 'title': title});
     ref.invalidateSelf();
   }
 
@@ -119,7 +119,7 @@ class SubtopicNotifier extends FamilyAsyncNotifier<List<SubtopicModel>, int> {
   }
 
   Future<void> addSubtopic(String title) async {
-    await ApiService().post('/subtopics', {'topic_id': arg, 'title': title});
+    await ApiService().post('/subtopics/', {'topic_id': arg, 'title': title});
     ref.invalidateSelf();
   }
 

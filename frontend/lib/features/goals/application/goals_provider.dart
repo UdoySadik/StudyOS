@@ -22,7 +22,7 @@ class GoalNotifier extends AutoDisposeAsyncNotifier<List<GoalModel>> {
   Future<void> setGoal(String targetDate) async {
     final roadmapId = ref.read(selectedRoadmapIdProvider);
     if (roadmapId == null) return;
-    await ApiService().post('/goals', {
+    await ApiService().post('/goals/', {
       'roadmap_id': roadmapId,
       'target_date': targetDate,
     });

@@ -54,3 +54,30 @@ app.include_router(analytics.router)
 def health_check():
     """Health check endpoint — Flutter pings this to confirm the backend is ready."""
     return {"status": "ok", "version": "1.0.0"}
+
+
+# Automatically add alternate routes (with and without trailing slashes)
+# to eliminate 307 Temporary Redirect responses for API clients like Dio.
+_existing_path_methods = {
+    (r.path, m)
+    for r in app.routes
+    if hasattr(r, "path") and hasattr(r, "methods")
+    for m in r.methods
+}
+for _route in list(app.routes):
+    if hasattr(_route, "path") and hasattr(_route, "endpoint") and hasattr(_route, "methods"):
+        _alt = _route.path.rstrip("/") if (_route.path.endswith("/") and len(_route.path) > 1) else f"{_route.path}/"
+        _needed_methods = [m for m in _route.methods if (_alt, m) not in _existing_path_methods]
+        if _needed_methods and not any(_alt.startswith(prefix) for prefix in ("/docs", "/openapi", "/redoc")):
+            for m in _needed_methods:
+                _existing_path_methods.add((_alt, m))
+            app.add_api_route(
+                _alt,
+                _route.endpoint,
+                methods=_needed_methods,
+                include_in_schema=False,
+                response_model=getattr(_route, "response_model", None),
+                status_code=getattr(_route, "status_code", None),
+                dependencies=getattr(_route, "dependencies", None),
+            )
+
