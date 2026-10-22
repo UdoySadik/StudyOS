@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../shared/services/api_service.dart';
+import '../../analytics/application/streak_provider.dart';
 import '../domain/schedule_model.dart';
 
 final selectedDateProvider = StateProvider<DateTime>((ref) => DateTime.now());
@@ -48,6 +49,7 @@ class ScheduleNotifier extends FamilyAsyncNotifier<List<ScheduleBlockModel>, Str
       'is_completed': isCompleted,
     });
     ref.invalidateSelf();
+    ref.invalidate(streakProvider);
   }
 
   Future<void> deleteBlock(int blockId) async {

@@ -361,5 +361,80 @@ def test_calendar_endpoints():
     client.post("/system/reset")
 
 
+def test_analytics_streak():
+    from datetime import date, timedelta
+    client.post("/system/reset")
+
+    today = date.today()
+    yesterday = today - timedelta(days=1)
+    day_before = today - timedelta(days=2)
+
+    # 1. Initially 0 streak
+    res = client.get("/analytics/streak")
+    assert res.status_code == 200
+    data = res.json()
+    assert data["current_streak"] == 0
+    assert data["longest_streak"] == 0
+    assert data["total_active_days"] == 0
+    assert data["is_active_today"] is False
+    assert len(data["weekly_consistency"]) == 7
+
+    # 2. Setup roadmap & topic
+    rm = client.post("/roadmaps/", json={"title": "ML & AI", "description": "Machine Learning"}).json()
+    ph = client.post("/phases/", json={"roadmap_id": rm["id"], "title": "Math"}).json()
+    tp = client.post("/topics/", json={"phase_id": ph["id"], "title": "Linear Algebra"}).json()
+
+    # 3. Log study session for today
+    client.post("/study-sessions/", json={
+        "topic_id": tp["id"],
+        "duration_seconds": 3600,
+        "logged_date": today.isoformat(),
+        "notes": "Eigenvalues"
+    })
+
+    res = client.get("/analytics/streak")
+    data = res.json()
+    assert data["current_streak"] == 1
+    assert data["longest_streak"] == 1
+    assert data["total_active_days"] == 1
+    assert data["is_active_today"] is True
+
+    # 4. Log study session for yesterday -> streak becomes 2
+    client.post("/study-sessions/", json={
+        "topic_id": tp["id"],
+        "duration_seconds": 1800,
+        "logged_date": yesterday.isoformat()
+    })
+
+    res = client.get("/analytics/streak")
+    data = res.json()
+    assert data["current_streak"] == 2
+    assert data["longest_streak"] == 2
+    assert data["total_active_days"] == 2
+
+    # 5. Mark schedule block complete for day before yesterday -> streak becomes 3
+    client.post("/schedule/", json={
+        "scheduled_date": day_before.isoformat(),
+        "start_time": "14:00",
+        "end_time": "15:00",
+        "title": "Matrix Multiplication",
+        "is_completed": True
+    })
+
+    res = client.get("/analytics/streak")
+    data = res.json()
+    assert data["current_streak"] == 3
+    assert data["longest_streak"] == 3
+    assert data["total_active_days"] == 3
+
+    # Check weekly consistency
+    today_item = [d for d in data["weekly_consistency"] if d["is_today"]][0]
+    assert today_item["is_active"] is True
+    assert today_item["study_seconds"] == 3600
+
+    client.post("/system/reset")
+
+
+
 
 

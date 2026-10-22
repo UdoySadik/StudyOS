@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/theme/app_theme.dart';
+import '../../features/analytics/application/streak_provider.dart';
 import '../../features/timer/presentation/active_timer_bar.dart';
 
 /// Nav item model
@@ -111,14 +112,14 @@ class _Sidebar extends StatelessWidget {
   Widget build(BuildContext context) {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
-      width: 220,
+      width: 240,
       color: AppColors.sidebarBg,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // App logo / name
           Padding(
-            padding: const EdgeInsets.fromLTRB(20, 28, 20, 24),
+            padding: const EdgeInsets.fromLTRB(14, 26, 12, 22),
             child: Row(
               children: [
                 Container(
@@ -134,7 +135,7 @@ class _Sidebar extends StatelessWidget {
                   ),
                   child: const Icon(Icons.school, color: Colors.white, size: 18),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 10),
                 const Text(
                   'StudyOS',
                   style: TextStyle(
@@ -144,6 +145,8 @@ class _Sidebar extends StatelessWidget {
                     letterSpacing: -0.3,
                   ),
                 ),
+                const Spacer(),
+                const _SidebarStreakBadge(),
               ],
             ),
           ),
@@ -273,3 +276,62 @@ class _SidebarNavItemState extends State<_SidebarNavItem> {
     );
   }
 }
+
+class _SidebarStreakBadge extends ConsumerWidget {
+  const _SidebarStreakBadge();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final streakAsync = ref.watch(streakProvider);
+
+    return streakAsync.when(
+      loading: () => const SizedBox.shrink(),
+      error: (_, __) => const SizedBox.shrink(),
+      data: (streak) {
+        final count = streak.currentStreak;
+        final hasStreak = count > 0;
+
+        return Tooltip(
+          message: hasStreak
+              ? '$count-day study streak! Keep it going!'
+              : 'Start your study streak today!',
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+            decoration: BoxDecoration(
+              color: hasStreak
+                  ? const Color(0xFFF59E0B).withValues(alpha: 0.15)
+                  : AppColors.darkCard,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: hasStreak
+                    ? const Color(0xFFF59E0B).withValues(alpha: 0.4)
+                    : AppColors.darkBorder,
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  hasStreak ? '🔥' : '⚡',
+                  style: const TextStyle(fontSize: 11),
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  '$count',
+                  style: TextStyle(
+                    color: hasStreak
+                        ? const Color(0xFFFBBF24)
+                        : AppColors.textDarkMuted,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+

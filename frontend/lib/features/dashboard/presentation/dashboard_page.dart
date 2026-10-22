@@ -6,6 +6,7 @@ import '../../roadmap/application/roadmap_provider.dart';
 import '../domain/dashboard_summary.dart';
 import '../../../shared/widgets/progress_bar.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../analytics/presentation/streak_card.dart';
 
 class DashboardPage extends ConsumerWidget {
   const DashboardPage({super.key});
@@ -140,7 +141,10 @@ class _DashboardContent extends StatelessWidget {
               ],
             ),
 
-            const SizedBox(height: 28),
+            const SizedBox(height: 24),
+
+            // Study Streak & Daily Consistency
+            const StreakConsistencyCard(),
 
             // Stats row
             Row(

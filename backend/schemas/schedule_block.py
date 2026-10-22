@@ -11,6 +11,7 @@ class ScheduleBlockCreate(BaseModel):
     end_time: str
     title: str
     topic_id: Optional[int] = None
+    is_completed: bool = False
     notes: Optional[str] = None
 
 

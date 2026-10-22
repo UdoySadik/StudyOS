@@ -160,12 +160,19 @@
 
 ---
 
-## Section F: Future Release Backlog (V1.3 onward)
+## Section F: Milestone V1.3 — Analytics (In Progress)
 
-### V1.3 — Analytics
-- [ ] **`TASK-V13-001` — Study Streaks & Daily Consistency Counter** (`BACKLOG`, P2)
+- [x] **`TASK-V13-001` — Study Streaks & Daily Consistency Counter**
+  - **Status:** `DONE-VERIFIED` | **Priority:** P2 | **Milestone:** V1.3 Analytics
+  - **Description:** Implemented backend `/analytics/streak` endpoint calculating active consecutive study days (sessions, schedule blocks, completed topics), longest streak record, total active days, and 7-day weekly consistency matrix. Built frontend `StreakConsistencyCard` with glowing fire motif, daily status chips, week strip with active checkmarks, and live `_SidebarStreakBadge` in `AppShell`.
+  - **Evidence:** `backend/routers/analytics.py`, `backend/schemas/analytics.py`, `frontend/lib/features/analytics/`, `dashboard_page.dart:140-145`, `app_shell.dart:140-155, 270-335`. Verified via pytest (100% pass, 8/8 tests), `flutter test` (100% pass, 9/9 tests), and `flutter analyze` (0 issues).
+
 - [ ] **`TASK-V13-002` — Phase Burndown & Velocity Charts** (`BACKLOG`, P2)
 - [ ] **`TASK-V13-003` — Monthly Study Hours Distribution** (`BACKLOG`, P3)
+
+---
+
+## Section G: Future Release Backlog (V1.4 onward)
 
 ### V1.4 — Projects & Resources
 - [ ] **`TASK-V14-001` — Topic Learning Resource Shelf (Books, Course URLs, PDFs)** (`BACKLOG`, P2)

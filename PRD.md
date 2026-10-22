@@ -213,10 +213,10 @@ The following table reflects the **complete, audited status** of all V1.0 featur
 - **Stopwatch & Study-Hour Logging per Topic (`TASK-V12-002` - DONE-VERIFIED):** Active focus timer, persistent glowing bottom timer bar, topic study badges and session logging.
 - **Calendar View for Target Milestones (`TASK-V12-003` - DONE-VERIFIED):** Monthly milestone calendar grid, study blocks overview, logged study hours ribbon, and day inspector.
 
-### Proposed V1.3 — Analytics
-- Learning consistency streaks.
-- Phase completion velocity and burn-down charts.
-- Monthly study hour distribution graphs.
+### Milestone V1.3 — Analytics (In Progress)
+- **Study Streaks & Daily Consistency Counter (`TASK-V13-001` - DONE-VERIFIED):** Consecutive active study days, longest streak record, 7-day consistency strip on Dashboard, and live sidebar streak badge.
+- **Phase Completion Velocity & Burndown Charts (`TASK-V13-002` - Backlog):** Visual completion rate over time.
+- **Monthly Study Hour Distribution Graphs (`TASK-V13-003` - Backlog):** Weekly/monthly hour breakdown.
 
 ### Proposed V1.4 — Projects & Resources
 - Resource repository linked to topics (Books, PDFs, documentation links, YouTube courses).
