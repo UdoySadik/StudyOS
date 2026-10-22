@@ -1,16 +1,25 @@
-"""Analytics router for Study Streaks and Consistency Metrics."""
-
+import math
 from datetime import date, timedelta
-from typing import Dict, List, Set
-from fastapi import APIRouter, Depends
-from sqlalchemy.orm import Session
+from typing import Dict, List, Optional, Set
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import func
 
 from database import get_db
+from models.roadmap import Roadmap
+from models.phase import Phase
+from models.goal import Goal
 from models.study_session import StudySession
 from models.schedule_block import ScheduleBlock
 from models.topic import Topic
-from schemas.analytics import StreakSummaryResponse, DayConsistencyItem
+from utils.progress_calculator import compute_roadmap_progress
+from schemas.analytics import (
+    StreakSummaryResponse,
+    DayConsistencyItem,
+    PhaseBurndownItem,
+    DailyVelocityItem,
+    RoadmapBurndownResponse,
+)
 
 router = APIRouter(prefix="/analytics", tags=["analytics"])
 
@@ -145,3 +154,181 @@ def get_streak_summary(db: Session = Depends(get_db)):
         weekly_consistency=weekly_consistency,
         active_dates_last_30_days=active_last_30,
     )
+
+
+@router.get("/burndown/{roadmap_id}", response_model=RoadmapBurndownResponse)
+def get_roadmap_burndown(roadmap_id: int, db: Session = Depends(get_db)):
+    """Compute Phase Burndown and Learning Velocity metrics for a roadmap."""
+    roadmap = (
+        db.query(Roadmap)
+        .options(joinedload(Roadmap.phases).joinedload(Phase.topics))
+        .filter(Roadmap.id == roadmap_id)
+        .first()
+    )
+    if not roadmap:
+        raise HTTPException(status_code=404, detail="Roadmap not found")
+
+    today = date.today()
+    progress = compute_roadmap_progress(roadmap.phases)
+    total_topics = progress["total_topics"]
+    completed_topics = progress["completed_topics"]
+    remaining_topics = progress["remaining_topics"]
+    progress_percent = progress["progress_percent"]
+
+    # Goal & required velocity
+    goal = (
+        db.query(Goal)
+        .filter(Goal.roadmap_id == roadmap_id)
+        .order_by(Goal.updated_at.desc())
+        .first()
+    )
+    target_date_str = None
+    days_remaining = None
+    required_velocity = 0.0
+
+    if goal:
+        target_date_str = goal.target_date.isoformat()
+        days_remaining = (goal.target_date - today).days
+        if days_remaining <= 0:
+            required_velocity = float(remaining_topics)
+        else:
+            required_velocity = round(remaining_topics / days_remaining, 2)
+
+    # Topic IDs in this roadmap
+    all_topic_ids = [t.id for p in roadmap.phases for t in p.topics]
+    seven_days_ago = today - timedelta(days=6)
+
+    # Topics completed in last 7 days
+    recent_completed_count = 0
+    recent_study_seconds = 0
+    if all_topic_ids:
+        recent_completed_count = (
+            db.query(func.count(Topic.id))
+            .filter(Topic.id.in_(all_topic_ids))
+            .filter(Topic.is_completed == True)
+            .filter(func.date(Topic.completed_at) >= seven_days_ago)
+            .scalar()
+            or 0
+        )
+        recent_study_seconds = (
+            db.query(func.sum(StudySession.duration_seconds))
+            .filter(StudySession.topic_id.in_(all_topic_ids))
+            .filter(StudySession.logged_date >= seven_days_ago)
+            .scalar()
+            or 0
+        )
+
+    current_velocity_7d = round(recent_completed_count / 7.0, 2)
+    current_study_hours_7d = round((recent_study_seconds / 3600.0) / 7.0, 2)
+
+    # Status & Trajectory
+    projected_completion_date = None
+    if remaining_topics == 0 and total_topics > 0:
+        status = "completed"
+        status_label = "Roadmap Completed 🎉"
+    elif not goal:
+        status = "no_goal"
+        status_label = "No Deadline Set"
+        if current_velocity_7d > 0:
+            days_needed = math.ceil(remaining_topics / current_velocity_7d)
+            projected_completion_date = (today + timedelta(days=days_needed)).isoformat()
+    else:
+        if days_remaining is not None and days_remaining < 0:
+            status = "behind"
+            status_label = "Overdue ⚠️"
+        elif current_velocity_7d >= required_velocity * 1.25 and required_velocity > 0:
+            status = "ahead"
+            status_label = "Ahead of Pace 🚀"
+        elif current_velocity_7d >= required_velocity and required_velocity > 0:
+            status = "on_track"
+            status_label = "On Track 🟢"
+        elif current_velocity_7d > 0:
+            status = "behind"
+            status_label = "Needs Attention 🟡"
+        else:
+            status = "behind"
+            status_label = "Behind Schedule 🔴"
+
+        if current_velocity_7d > 0:
+            days_needed = math.ceil(remaining_topics / current_velocity_7d)
+            projected_completion_date = (today + timedelta(days=days_needed)).isoformat()
+
+    # Phase-by-phase burndown
+    phases_burndown: List[PhaseBurndownItem] = []
+    for phase in sorted(roadmap.phases, key=lambda p: p.order_index):
+        total_p = len(phase.topics)
+        comp_p = sum(1 for t in phase.topics if t.is_completed)
+        rem_p = total_p - comp_p
+        pct_p = round((comp_p / total_p * 100) if total_p > 0 else 0, 1)
+
+        est_days = None
+        if current_velocity_7d > 0 and rem_p > 0:
+            est_days = round(rem_p / current_velocity_7d, 1)
+        elif rem_p == 0:
+            est_days = 0.0
+
+        phases_burndown.append(
+            PhaseBurndownItem(
+                phase_id=phase.id,
+                phase_title=phase.title,
+                order_index=phase.order_index,
+                total_topics=total_p,
+                completed_topics=comp_p,
+                remaining_topics=rem_p,
+                progress_percent=pct_p,
+                estimated_days_to_complete=est_days,
+            )
+        )
+
+    # 7-day velocity breakdown
+    day_labels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+    recent_velocity: List[DailyVelocityItem] = []
+    for i in range(7):
+        d = seven_days_ago + timedelta(days=i)
+        day_completed = 0
+        day_study_sec = 0
+        if all_topic_ids:
+            day_completed = (
+                db.query(func.count(Topic.id))
+                .filter(Topic.id.in_(all_topic_ids))
+                .filter(Topic.is_completed == True)
+                .filter(func.date(Topic.completed_at) == d)
+                .scalar()
+                or 0
+            )
+            day_study_sec = (
+                db.query(func.sum(StudySession.duration_seconds))
+                .filter(StudySession.topic_id.in_(all_topic_ids))
+                .filter(StudySession.logged_date == d)
+                .scalar()
+                or 0
+            )
+
+        recent_velocity.append(
+            DailyVelocityItem(
+                date=d.isoformat(),
+                day_label=day_labels[d.weekday()],
+                topics_completed=day_completed,
+                study_seconds=day_study_sec,
+            )
+        )
+
+    return RoadmapBurndownResponse(
+        roadmap_id=roadmap.id,
+        roadmap_title=roadmap.title,
+        total_topics=total_topics,
+        completed_topics=completed_topics,
+        remaining_topics=remaining_topics,
+        progress_percent=progress_percent,
+        target_date=target_date_str,
+        days_remaining=days_remaining,
+        required_velocity=required_velocity,
+        current_velocity_7d=current_velocity_7d,
+        current_study_hours_7d=current_study_hours_7d,
+        status=status,
+        status_label=status_label,
+        projected_completion_date=projected_completion_date,
+        phases=phases_burndown,
+        recent_velocity=recent_velocity,
+    )
+

@@ -435,6 +435,60 @@ def test_analytics_streak():
     client.post("/system/reset")
 
 
+def test_burndown_velocity_endpoints():
+    from datetime import date, timedelta
+    client.post("/system/reset")
+
+    today = date.today()
+    target = today + timedelta(days=10)
+
+    # 1. Create Roadmap, Phases, and Topics
+    rm = client.post("/roadmaps/", json={"title": "Rust Engineering", "description": "Systems"}).json()
+    rm_id = rm["id"]
+
+    p1 = client.post("/phases/", json={"roadmap_id": rm_id, "title": "Basics"}).json()
+    p2 = client.post("/phases/", json={"roadmap_id": rm_id, "title": "Advanced"}).json()
+
+    t1 = client.post("/topics/", json={"phase_id": p1["id"], "title": "Borrowing"}).json()
+    t2 = client.post("/topics/", json={"phase_id": p1["id"], "title": "Lifetimes"}).json()
+    t3 = client.post("/topics/", json={"phase_id": p2["id"], "title": "Async"}).json()
+    t4 = client.post("/topics/", json={"phase_id": p2["id"], "title": "Macros"}).json()
+
+    # 2. Complete topic 1
+    client.patch(f"/topics/{t1['id']}/complete", json={"is_completed": True})
+
+    # 3. Create Goal
+    client.post("/goals/", json={"roadmap_id": rm_id, "target_date": target.isoformat()})
+
+    # 4. Fetch burndown & velocity
+    res = client.get(f"/analytics/burndown/{rm_id}")
+    assert res.status_code == 200
+    data = res.json()
+
+    assert data["roadmap_id"] == rm_id
+    assert data["total_topics"] == 4
+    assert data["completed_topics"] == 1
+    assert data["remaining_topics"] == 3
+    assert data["progress_percent"] == 25.0
+    assert data["target_date"] == target.isoformat()
+    assert data["days_remaining"] == 10
+    assert data["required_velocity"] == 0.3  # 3 remaining / 10 days
+    assert len(data["phases"]) == 2
+    assert data["phases"][0]["phase_title"] == "Basics"
+    assert data["phases"][0]["completed_topics"] == 1
+    assert data["phases"][0]["remaining_topics"] == 1
+    assert data["phases"][1]["phase_title"] == "Advanced"
+    assert data["phases"][1]["completed_topics"] == 0
+    assert data["phases"][1]["remaining_topics"] == 2
+    assert len(data["recent_velocity"]) == 7
+
+    # 5. Non-existent roadmap returns 404
+    assert client.get("/analytics/burndown/99999").status_code == 404
+
+    client.post("/system/reset")
+
+
+
 
 
 

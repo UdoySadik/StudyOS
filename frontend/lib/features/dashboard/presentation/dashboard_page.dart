@@ -7,6 +7,7 @@ import '../domain/dashboard_summary.dart';
 import '../../../shared/widgets/progress_bar.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../analytics/presentation/streak_card.dart';
+import '../../analytics/presentation/burndown_velocity_card.dart';
 
 class DashboardPage extends ConsumerWidget {
   const DashboardPage({super.key});
@@ -191,6 +192,9 @@ class _DashboardContent extends StatelessWidget {
             ),
 
             const SizedBox(height: 24),
+
+            // Phase Burndown & Learning Velocity
+            BurndownVelocityCard(roadmapId: summary.roadmapId),
 
             // Today's Focus
             if (summary.todaySuggestions.isNotEmpty) ...[

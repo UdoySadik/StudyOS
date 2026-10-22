@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../shared/services/api_service.dart';
+import '../../analytics/application/burndown_provider.dart';
 import '../domain/roadmap_models.dart';
 
 // ── Providers ────────────────────────────────────────────────────────────────
@@ -64,16 +65,19 @@ class PhaseNotifier extends FamilyAsyncNotifier<List<PhaseModel>, int> {
   Future<void> addPhase(String title) async {
     await ApiService().post('/phases/', {'roadmap_id': arg, 'title': title});
     ref.invalidateSelf();
+    ref.invalidate(burndownProvider);
   }
 
   Future<void> deletePhase(int phaseId) async {
     await ApiService().delete('/phases/$phaseId');
     ref.invalidateSelf();
+    ref.invalidate(burndownProvider);
   }
 
   Future<void> updatePhase(int phaseId, String title) async {
     await ApiService().patch('/phases/$phaseId', {'title': title});
     ref.invalidateSelf();
+    ref.invalidate(burndownProvider);
   }
 }
 
@@ -90,21 +94,25 @@ class TopicNotifier extends FamilyAsyncNotifier<List<TopicModel>, int> {
   Future<void> addTopic(String title) async {
     await ApiService().post('/topics/', {'phase_id': arg, 'title': title});
     ref.invalidateSelf();
+    ref.invalidate(burndownProvider);
   }
 
   Future<void> deleteTopic(int topicId) async {
     await ApiService().delete('/topics/$topicId');
     ref.invalidateSelf();
+    ref.invalidate(burndownProvider);
   }
 
   Future<void> updateTopic(int topicId, String title) async {
     await ApiService().patch('/topics/$topicId', {'title': title});
     ref.invalidateSelf();
+    ref.invalidate(burndownProvider);
   }
 
   Future<void> toggleComplete(int topicId, bool isCompleted) async {
     await ApiService().patch('/topics/$topicId/complete', {'is_completed': isCompleted});
     ref.invalidateSelf();
+    ref.invalidate(burndownProvider);
   }
 }
 

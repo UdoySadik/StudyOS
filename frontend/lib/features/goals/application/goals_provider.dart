@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../shared/services/api_service.dart';
+import '../../analytics/application/burndown_provider.dart';
 import '../../roadmap/application/roadmap_provider.dart';
 import '../domain/goal_model.dart';
 
@@ -27,6 +28,7 @@ class GoalNotifier extends AutoDisposeAsyncNotifier<List<GoalModel>> {
       'target_date': targetDate,
     });
     ref.invalidateSelf();
+    ref.invalidate(burndownProvider);
   }
 
   Future<void> updateGoal(int goalId, String targetDate) async {
@@ -34,11 +36,13 @@ class GoalNotifier extends AutoDisposeAsyncNotifier<List<GoalModel>> {
       'target_date': targetDate,
     });
     ref.invalidateSelf();
+    ref.invalidate(burndownProvider);
   }
 
   Future<void> deleteGoal(int goalId) async {
     await ApiService().delete('/goals/$goalId');
     ref.invalidateSelf();
+    ref.invalidate(burndownProvider);
   }
 }
 

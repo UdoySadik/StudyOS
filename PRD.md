@@ -215,7 +215,7 @@ The following table reflects the **complete, audited status** of all V1.0 featur
 
 ### Milestone V1.3 — Analytics (In Progress)
 - **Study Streaks & Daily Consistency Counter (`TASK-V13-001` - DONE-VERIFIED):** Consecutive active study days, longest streak record, 7-day consistency strip on Dashboard, and live sidebar streak badge.
-- **Phase Completion Velocity & Burndown Charts (`TASK-V13-002` - Backlog):** Visual completion rate over time.
+- **Phase Completion Velocity & Burndown Charts (`TASK-V13-002` - DONE-VERIFIED):** Phase burndown progress bars, remaining topic estimates, 7-day velocity average, schedule health status, projected finish date, and 7-day velocity chart.
 - **Monthly Study Hour Distribution Graphs (`TASK-V13-003` - Backlog):** Weekly/monthly hour breakdown.
 
 ### Proposed V1.4 — Projects & Resources

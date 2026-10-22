@@ -167,7 +167,11 @@
   - **Description:** Implemented backend `/analytics/streak` endpoint calculating active consecutive study days (sessions, schedule blocks, completed topics), longest streak record, total active days, and 7-day weekly consistency matrix. Built frontend `StreakConsistencyCard` with glowing fire motif, daily status chips, week strip with active checkmarks, and live `_SidebarStreakBadge` in `AppShell`.
   - **Evidence:** `backend/routers/analytics.py`, `backend/schemas/analytics.py`, `frontend/lib/features/analytics/`, `dashboard_page.dart:140-145`, `app_shell.dart:140-155, 270-335`. Verified via pytest (100% pass, 8/8 tests), `flutter test` (100% pass, 9/9 tests), and `flutter analyze` (0 issues).
 
-- [ ] **`TASK-V13-002` — Phase Burndown & Velocity Charts** (`BACKLOG`, P2)
+- [x] **`TASK-V13-002` — Phase Burndown & Velocity Charts**
+  - **Status:** `DONE-VERIFIED` | **Priority:** P2 | **Milestone:** V1.3 Analytics
+  - **Description:** Implemented backend `/analytics/burndown/{roadmap_id}` endpoint delivering comprehensive phase burndown progress (order index, completed/remaining topics, progress percent, estimated days to finish per phase), 7-day velocity metrics (current pace vs required goal pace, days remaining, schedule status, projected finish date), and 7-day velocity activity breakdown. Built responsive Flutter `BurndownVelocityCard` on Dashboard featuring dual-column master/detail breakdown, status pill badges, phase completion progress bars, velocity statistics cards, and vertical bar velocity chart. Wired reactive cache invalidations across topic, phase, and goal mutations.
+  - **Evidence:** `backend/routers/analytics.py`, `backend/schemas/analytics.py`, `frontend/lib/features/analytics/presentation/burndown_velocity_card.dart`, `frontend/lib/features/analytics/domain/burndown_model.dart`, `frontend/lib/features/analytics/application/burndown_provider.dart`, `frontend/test/burndown_test.dart`. Verified via pytest (100% pass, 9/9 tests), `flutter test` (100% pass, 14/14 tests), and `flutter analyze` (0 issues).
+
 - [ ] **`TASK-V13-003` — Monthly Study Hours Distribution** (`BACKLOG`, P3)
 
 ---
