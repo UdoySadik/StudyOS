@@ -34,3 +34,8 @@ class Topic(Base):
         cascade="all, delete-orphan",
         uselist=False,  # one-to-one
     )
+    study_sessions = relationship(
+        "StudySession",
+        back_populates="topic",
+        cascade="all, delete-orphan",
+    )

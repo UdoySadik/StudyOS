@@ -148,7 +148,11 @@
   - **Description:** Implemented full backend CRUD API for `ScheduleBlock` (`GET /schedule/?target_date=`, `POST`, `PATCH`, `DELETE`) and desktop Flutter presentation (`schedule_page.dart`) with day navigator, time block cards, completion toggles, daily progress bar, and keyboard navigation (`Ctrl+3`).
   - **Evidence:** `backend/models/schedule_block.py`, `backend/routers/schedule.py`, `frontend/lib/features/schedule/presentation/schedule_page.dart`. Verified via automated tests `test_schedule_endpoints()` (100% pass) and `flutter analyze` (0 issues).
 
-- [ ] **`TASK-V12-002` — Stopwatch & Study-Hour Logging per Topic** (`BACKLOG`, P2)
+- [x] **`TASK-V12-002` — Stopwatch & Study-Hour Logging per Topic**
+  - **Status:** `DONE-VERIFIED` | **Priority:** P2 | **Milestone:** V1.2 Planning
+  - **Description:** Implemented backend `StudySession` model, summary & stats API (`POST /study-sessions/`, `GET /study-sessions/summary`, `GET /study-sessions/topic/{id}`), frontend `StudyTimerNotifier`, global glowing `ActiveStudyTimerBar` at bottom of `AppShell`, quick topic timer triggers & invested time badges (`_TopicStudyBadge`) across Roadmap and Notes workspaces.
+  - **Evidence:** `backend/models/study_session.py`, `backend/routers/study_sessions.py`, `frontend/lib/features/timer/`, `roadmap_page.dart:1110-1195`, `notes_page.dart:315-360`. Verified via automated tests `test_study_sessions_endpoints()` (100% pass) and `flutter analyze` (0 issues).
+
 - [ ] **`TASK-V12-003` — Calendar View for Target Milestones** (`BACKLOG`, P2)
 
 ---

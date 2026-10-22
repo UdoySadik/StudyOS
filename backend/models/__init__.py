@@ -6,5 +6,6 @@ from .subtopic import Subtopic
 from .note import Note
 from .goal import Goal
 from .schedule_block import ScheduleBlock
+from .study_session import StudySession
 
-__all__ = ["Roadmap", "Phase", "Topic", "Subtopic", "Note", "Goal", "ScheduleBlock"]
+__all__ = ["Roadmap", "Phase", "Topic", "Subtopic", "Note", "Goal", "ScheduleBlock", "StudySession"]

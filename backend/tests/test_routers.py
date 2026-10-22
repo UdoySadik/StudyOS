@@ -248,3 +248,70 @@ def test_schedule_endpoints():
     client.post("/system/reset")
 
 
+def test_study_sessions_endpoints():
+    client.post("/system/reset")
+
+    # 1. Setup roadmap and topics
+    rm = client.post("/roadmaps/", json={"title": "Rust Mastery", "description": "Systems"}).json()
+    ph = client.post("/phases/", json={"roadmap_id": rm["id"], "title": "Ownership"}).json()
+    tp1 = client.post("/topics/", json={"phase_id": ph["id"], "title": "Borrow Checker"}).json()
+    tp2 = client.post("/topics/", json={"phase_id": ph["id"], "title": "Smart Pointers"}).json()
+
+    # 2. Log sessions for Topic 1
+    s1 = client.post("/study-sessions/", json={
+        "topic_id": tp1["id"],
+        "duration_seconds": 1800,  # 30 mins
+        "notes": "Read chapters 4.1 to 4.3"
+    })
+    assert s1.status_code == 201
+    s1_id = s1.json()["id"]
+    assert s1.json()["duration_seconds"] == 1800
+
+    s2 = client.post("/study-sessions/", json={
+        "topic_id": tp1["id"],
+        "duration_seconds": 1200,  # 20 mins
+        "notes": "Exercised borrow errors"
+    })
+    assert s2.status_code == 201
+
+    # Log session for Topic 2
+    client.post("/study-sessions/", json={
+        "topic_id": tp2["id"],
+        "duration_seconds": 2400,  # 40 mins
+        "notes": "Box and Rc pointers"
+    })
+
+    # 3. Check topic stats for Topic 1
+    stats1 = client.get(f"/study-sessions/topic/{tp1['id']}").json()
+    assert stats1["topic_id"] == tp1["id"]
+    assert stats1["total_seconds"] == 3000  # 1800 + 1200
+    assert stats1["session_count"] == 2
+
+    # 4. Check study summary
+    summary = client.get("/study-sessions/summary").json()
+    assert summary["total_seconds_today"] == 5400  # 3000 + 2400
+    assert summary["total_seconds_all_time"] == 5400
+    assert summary["total_sessions_count"] == 3
+    assert len(summary["topic_stats"]) == 2
+
+    # 5. List with filter
+    tp1_list = client.get(f"/study-sessions/?topic_id={tp1['id']}").json()
+    assert len(tp1_list) == 2
+
+    # 6. Delete a session
+    del_res = client.delete(f"/study-sessions/{s1_id}")
+    assert del_res.status_code == 204
+
+    # Stats updated after delete
+    stats_after = client.get(f"/study-sessions/topic/{tp1['id']}").json()
+    assert stats_after["total_seconds"] == 1200
+    assert stats_after["session_count"] == 1
+
+    # 7. Invalid topic validation
+    inv = client.post("/study-sessions/", json={"topic_id": 999999, "duration_seconds": 300})
+    assert inv.status_code == 404
+
+    client.post("/system/reset")
+
+
+

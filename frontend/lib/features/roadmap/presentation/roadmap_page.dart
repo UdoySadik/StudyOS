@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../roadmap/application/roadmap_provider.dart';
 import '../../roadmap/domain/roadmap_models.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../timer/application/timer_provider.dart';
 
 class RoadmapPage extends ConsumerStatefulWidget {
   const RoadmapPage({super.key});
@@ -497,13 +498,22 @@ class _CompactTopicRow extends ConsumerWidget {
           ),
           const SizedBox(width: 8),
           Expanded(
-            child: Text(
-              topic.title,
-              style: TextStyle(
-                color: topic.isCompleted ? AppColors.textDarkMuted : AppColors.textDarkPrimary,
-                fontSize: 12,
-                decoration: topic.isCompleted ? TextDecoration.lineThrough : null,
-              ),
+            child: Row(
+              children: [
+                Flexible(
+                  child: Text(
+                    topic.title,
+                    style: TextStyle(
+                      color: topic.isCompleted ? AppColors.textDarkMuted : AppColors.textDarkPrimary,
+                      fontSize: 12,
+                      decoration: topic.isCompleted ? TextDecoration.lineThrough : null,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                _TopicStudyBadge(topicId: topic.id),
+              ],
             ),
           ),
           _TopicActions(topic: topic, phaseId: phaseId),
@@ -804,16 +814,23 @@ class _TopicTileState extends ConsumerState<_TopicTile> {
               ),
               const SizedBox(width: 10),
               Expanded(
-                child: Text(
-                  topic.title,
-                  style: TextStyle(
-                    color: topic.isCompleted
-                        ? AppColors.textDarkMuted
-                        : AppColors.textDarkPrimary,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w400,
-                    decoration: topic.isCompleted ? TextDecoration.lineThrough : null,
-                  ),
+                child: Row(
+                  children: [
+                    Flexible(
+                      child: Text(
+                        topic.title,
+                        style: TextStyle(
+                          color: topic.isCompleted
+                              ? AppColors.textDarkMuted
+                              : AppColors.textDarkPrimary,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w400,
+                          decoration: topic.isCompleted ? TextDecoration.lineThrough : null,
+                        ),
+                      ),
+                    ),
+                    _TopicStudyBadge(topicId: topic.id),
+                  ],
                 ),
               ),
               _TopicActions(topic: topic, phaseId: widget.phaseId),
@@ -1093,6 +1110,22 @@ class _TopicActions extends ConsumerWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         IconButton(
+          icon: const Icon(Icons.timer_outlined, size: 14),
+          color: AppColors.accent,
+          tooltip: 'Start Study Stopwatch',
+          onPressed: () {
+            ref.read(studyTimerProvider.notifier).startTimer(topic.id, topic.title);
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Study timer started for "${topic.title}"!'),
+                backgroundColor: AppColors.primary,
+                duration: const Duration(seconds: 2),
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+          },
+        ),
+        IconButton(
           icon: const Icon(Icons.edit_outlined, size: 13),
           color: AppColors.textDarkMuted,
           onPressed: () => _showEditDialog(context, ref),
@@ -1137,6 +1170,46 @@ class _TopicActions extends ConsumerWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _TopicStudyBadge extends ConsumerWidget {
+  final int topicId;
+  const _TopicStudyBadge({required this.topicId});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final statsAsync = ref.watch(topicStudyStatsProvider(topicId));
+    return statsAsync.maybeWhen(
+      data: (stats) {
+        if (stats.totalSeconds == 0) return const SizedBox.shrink();
+        return Container(
+          margin: const EdgeInsets.only(left: 6),
+          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+          decoration: BoxDecoration(
+            color: AppColors.primary.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(4),
+            border: Border.all(color: AppColors.primary.withValues(alpha: 0.25)),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.timer, size: 10, color: AppColors.primary),
+              const SizedBox(width: 3),
+              Text(
+                stats.formattedDuration,
+                style: const TextStyle(
+                  color: AppColors.primary,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+      orElse: () => const SizedBox.shrink(),
     );
   }
 }

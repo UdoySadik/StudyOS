@@ -4,6 +4,7 @@ import 'package:flutter_markdown/flutter_markdown.dart';
 import '../../roadmap/application/roadmap_provider.dart';
 import '../../roadmap/domain/roadmap_models.dart';
 import '../application/notes_provider.dart';
+import '../../timer/application/timer_provider.dart';
 import '../../../core/theme/app_theme.dart';
 
 class NotesPage extends ConsumerStatefulWidget {
@@ -283,6 +284,8 @@ class _NotesPageState extends ConsumerState<NotesPage> {
 
   Widget _buildNotesWorkspace(int topicId) {
     final noteAsync = ref.watch(topicNoteNotifierProvider(topicId));
+    final timerState = ref.watch(studyTimerProvider);
+    final statsAsync = ref.watch(topicStudyStatsProvider(topicId));
 
     return noteAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
@@ -301,9 +304,26 @@ class _NotesPageState extends ConsumerState<NotesPage> {
             title: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Study Notes',
-                  style: TextStyle(color: AppColors.textDarkSecondary, fontSize: 11),
+                Row(
+                  children: [
+                    const Text(
+                      'Study Notes',
+                      style: TextStyle(color: AppColors.textDarkSecondary, fontSize: 11),
+                    ),
+                    statsAsync.maybeWhen(
+                      data: (stats) {
+                        if (stats.totalSeconds == 0) return const SizedBox.shrink();
+                        return Padding(
+                          padding: const EdgeInsets.only(left: 8),
+                          child: Text(
+                            '•  ⏱️ ${stats.formattedDuration} studied',
+                            style: const TextStyle(color: AppColors.primary, fontSize: 11, fontWeight: FontWeight.w600),
+                          ),
+                        );
+                      },
+                      orElse: () => const SizedBox.shrink(),
+                    ),
+                  ],
                 ),
                 Text(
                   _selectedTopicTitle ?? '',
@@ -316,6 +336,48 @@ class _NotesPageState extends ConsumerState<NotesPage> {
               ],
             ),
             actions: [
+              // Study Stopwatch Button
+              OutlinedButton.icon(
+                icon: Icon(
+                  timerState.activeTopicId == topicId && timerState.isRunning
+                      ? Icons.pause
+                      : Icons.timer_outlined,
+                  size: 14,
+                  color: timerState.activeTopicId == topicId ? AppColors.success : AppColors.primary,
+                ),
+                label: Text(
+                  timerState.activeTopicId == topicId
+                      ? (timerState.isRunning ? 'Timer: ${timerState.formattedTime}' : 'Paused')
+                      : 'Study Topic',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: timerState.activeTopicId == topicId ? AppColors.success : AppColors.primary,
+                  ),
+                ),
+                style: OutlinedButton.styleFrom(
+                  side: BorderSide(
+                    color: timerState.activeTopicId == topicId
+                        ? AppColors.success.withValues(alpha: 0.5)
+                        : AppColors.primary.withValues(alpha: 0.4),
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                ),
+                onPressed: () {
+                  if (timerState.activeTopicId == topicId) {
+                    if (timerState.isRunning) {
+                      ref.read(studyTimerProvider.notifier).pauseTimer();
+                    } else {
+                      ref.read(studyTimerProvider.notifier).resumeTimer();
+                    }
+                  } else {
+                    ref.read(studyTimerProvider.notifier).startTimer(
+                          topicId,
+                          _selectedTopicTitle ?? 'Topic Study',
+                        );
+                  }
+                },
+              ),
+              const SizedBox(width: 16),
               // Auto-save Status Indicator
               Row(
                 children: [

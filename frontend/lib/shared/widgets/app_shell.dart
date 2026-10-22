@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/theme/app_theme.dart';
+import '../../features/timer/presentation/active_timer_bar.dart';
 
 /// Nav item model
 class _NavItem {
@@ -88,6 +89,7 @@ class AppShell extends ConsumerWidget {
         autofocus: true,
         child: Scaffold(
           backgroundColor: AppColors.darkBg,
+          bottomNavigationBar: const ActiveStudyTimerBar(),
           body: Row(
             children: [
               _Sidebar(currentLocation: location),
