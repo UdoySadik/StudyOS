@@ -141,7 +141,7 @@
 
 ---
 
-## Section E: Milestone V1.2 — Planning (In Progress)
+## Section E: Milestone V1.2 — Planning (Completed 100%)
 
 - [x] **`TASK-V12-001` — Daily Study Schedule & Time-Blocking**
   - **Status:** `DONE-VERIFIED` | **Priority:** P2 | **Milestone:** V1.2 Planning
@@ -153,7 +153,10 @@
   - **Description:** Implemented backend `StudySession` model, summary & stats API (`POST /study-sessions/`, `GET /study-sessions/summary`, `GET /study-sessions/topic/{id}`), frontend `StudyTimerNotifier`, global glowing `ActiveStudyTimerBar` at bottom of `AppShell`, quick topic timer triggers & invested time badges (`_TopicStudyBadge`) across Roadmap and Notes workspaces.
   - **Evidence:** `backend/models/study_session.py`, `backend/routers/study_sessions.py`, `frontend/lib/features/timer/`, `roadmap_page.dart:1110-1195`, `notes_page.dart:315-360`. Verified via automated tests `test_study_sessions_endpoints()` (100% pass) and `flutter analyze` (0 issues).
 
-- [ ] **`TASK-V12-003` — Calendar View for Target Milestones** (`BACKLOG`, P2)
+- [x] **`TASK-V12-003` — Calendar View for Target Milestones & Daily Schedule**
+  - **Status:** `DONE-VERIFIED` | **Priority:** P2 | **Milestone:** V1.2 Planning
+  - **Description:** Implemented backend aggregation endpoint (`GET /calendar/events?year=&month=`) consolidating roadmap target milestones, scheduled time blocks, and logged study hours for any month. Implemented desktop Flutter `CalendarView` with interactive monthly grid, date-specific indicators (milestones 🚩, blocks 📅, study time ⏱️), monthly metrics ribbon, and responsive selected-day inspector with inline completion and scheduling shortcuts.
+  - **Evidence:** `backend/routers/calendar.py`, `backend/schemas/calendar.py`, `frontend/lib/features/schedule/presentation/calendar_view.dart`, `frontend/lib/features/schedule/presentation/schedule_page.dart`, `frontend/test/calendar_test.dart`. Verified via pytest (100% pass), `flutter test` (100% pass), and `flutter analyze` (0 issues).
 
 ---
 

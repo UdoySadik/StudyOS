@@ -1,8 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_theme.dart';
+import '../application/calendar_provider.dart';
 import '../application/schedule_provider.dart';
 import '../domain/schedule_model.dart';
+import 'calendar_view.dart';
+
+enum ScheduleViewMode { daily, calendar }
+
+final scheduleViewModeProvider =
+    StateProvider<ScheduleViewMode>((ref) => ScheduleViewMode.daily);
 
 class SchedulePage extends ConsumerStatefulWidget {
   const SchedulePage({super.key});
@@ -14,6 +21,7 @@ class SchedulePage extends ConsumerStatefulWidget {
 class _SchedulePageState extends ConsumerState<SchedulePage> {
   @override
   Widget build(BuildContext context) {
+    final viewMode = ref.watch(scheduleViewModeProvider);
     final selectedDate = ref.watch(selectedDateProvider);
     final dateStr = formatDate(selectedDate);
     final blocksAsync = ref.watch(scheduleNotifierProvider(dateStr));
@@ -24,24 +32,37 @@ class _SchedulePageState extends ConsumerState<SchedulePage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // ── Header Area ───────────────────────────────────────────────────
-          _buildHeader(context, selectedDate, dateStr),
+          _buildHeader(context, selectedDate, dateStr, viewMode),
 
           // ── Content Area ──────────────────────────────────────────────────
           Expanded(
-            child: blocksAsync.when(
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (err, _) => Center(
-                child: Text('Error: $err', style: const TextStyle(color: AppColors.error)),
-              ),
-              data: (blocks) => _buildScheduleContent(context, blocks, dateStr),
-            ),
+            child: viewMode == ScheduleViewMode.daily
+                ? blocksAsync.when(
+                    loading: () => const Center(child: CircularProgressIndicator()),
+                    error: (err, _) => Center(
+                      child: Text('Error: $err', style: const TextStyle(color: AppColors.error)),
+                    ),
+                    data: (blocks) => _buildScheduleContent(context, blocks, dateStr),
+                  )
+                : CalendarView(
+                    onAddBlockPressed: () => _showAddEditBlockDialog(context, dateStr),
+                    onSwitchToDailyPressed: () {
+                      ref.read(scheduleViewModeProvider.notifier).state =
+                          ScheduleViewMode.daily;
+                    },
+                  ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildHeader(BuildContext context, DateTime selectedDate, String dateStr) {
+  Widget _buildHeader(
+    BuildContext context,
+    DateTime selectedDate,
+    String dateStr,
+    ScheduleViewMode viewMode,
+  ) {
     final isToday = formatDate(DateTime.now()) == dateStr;
 
     return Padding(
@@ -49,95 +70,139 @@ class _SchedulePageState extends ConsumerState<SchedulePage> {
       child: Row(
         children: [
           // Title
-          const Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Daily Study Schedule',
-                style: TextStyle(
-                  color: AppColors.textDarkPrimary,
-                  fontSize: 24,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: -0.5,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  viewMode == ScheduleViewMode.daily
+                      ? 'Daily Study Schedule'
+                      : 'Target Milestones & Calendar',
+                  style: const TextStyle(
+                    color: AppColors.textDarkPrimary,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: -0.5,
+                  ),
                 ),
-              ),
-              SizedBox(height: 4),
-              Text(
-                'Plan and track your hourly study blocks',
-                style: TextStyle(color: AppColors.textDarkMuted, fontSize: 13),
-              ),
-            ],
+                const SizedBox(height: 4),
+                Text(
+                  viewMode == ScheduleViewMode.daily
+                      ? 'Plan and track your hourly study blocks'
+                      : 'Milestone deadlines, study blocks, and logged hours',
+                  style: const TextStyle(color: AppColors.textDarkMuted, fontSize: 13),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
           ),
-          const Spacer(),
+          const SizedBox(width: 16),
 
-          // Date Navigator
+          // View Mode Switcher
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+            padding: const EdgeInsets.all(4),
             decoration: BoxDecoration(
               color: AppColors.darkCard,
               borderRadius: BorderRadius.circular(10),
               border: Border.all(color: AppColors.darkBorder),
             ),
             child: Row(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                IconButton(
-                  icon: const Icon(Icons.chevron_left, size: 20),
-                  color: AppColors.textDarkSecondary,
-                  tooltip: 'Previous Day',
-                  onPressed: () {
-                    ref.read(selectedDateProvider.notifier).state =
-                        selectedDate.subtract(const Duration(days: 1));
+                _ViewToggleButton(
+                  icon: Icons.view_day_outlined,
+                  label: 'Daily Blocks',
+                  isSelected: viewMode == ScheduleViewMode.daily,
+                  onTap: () {
+                    ref.read(scheduleViewModeProvider.notifier).state =
+                        ScheduleViewMode.daily;
                   },
                 ),
-                InkWell(
-                  onTap: () => _pickDate(context, selectedDate),
-                  borderRadius: BorderRadius.circular(6),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.calendar_today_outlined, size: 14, color: AppColors.primary),
-                        const SizedBox(width: 8),
-                        Text(
-                          isToday ? 'Today, $dateStr' : dateStr,
-                          style: TextStyle(
-                            color: isToday ? AppColors.primary : AppColors.textDarkPrimary,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.chevron_right, size: 20),
-                  color: AppColors.textDarkSecondary,
-                  tooltip: 'Next Day',
-                  onPressed: () {
-                    ref.read(selectedDateProvider.notifier).state =
-                        selectedDate.add(const Duration(days: 1));
+                const SizedBox(width: 4),
+                _ViewToggleButton(
+                  icon: Icons.calendar_month_outlined,
+                  label: 'Calendar View',
+                  isSelected: viewMode == ScheduleViewMode.calendar,
+                  onTap: () {
+                    ref.read(scheduleViewModeProvider.notifier).state =
+                        ScheduleViewMode.calendar;
                   },
                 ),
               ],
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 16),
 
-          // Jump to Today button
-          if (!isToday)
-            OutlinedButton(
-              onPressed: () {
-                ref.read(selectedDateProvider.notifier).state = DateTime.now();
-              },
-              style: OutlinedButton.styleFrom(
-                side: const BorderSide(color: AppColors.darkBorder),
-                foregroundColor: AppColors.textDarkSecondary,
+          // Date Navigator (Only in Daily view)
+          if (viewMode == ScheduleViewMode.daily) ...[
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+              decoration: BoxDecoration(
+                color: AppColors.darkCard,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: AppColors.darkBorder),
               ),
-              child: const Text('Today'),
+              child: Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.chevron_left, size: 20),
+                    color: AppColors.textDarkSecondary,
+                    tooltip: 'Previous Day',
+                    onPressed: () {
+                      ref.read(selectedDateProvider.notifier).state =
+                          selectedDate.subtract(const Duration(days: 1));
+                    },
+                  ),
+                  InkWell(
+                    onTap: () => _pickDate(context, selectedDate),
+                    borderRadius: BorderRadius.circular(6),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.calendar_today_outlined, size: 14, color: AppColors.primary),
+                          const SizedBox(width: 8),
+                          Text(
+                            isToday ? 'Today, $dateStr' : dateStr,
+                            style: TextStyle(
+                              color: isToday ? AppColors.primary : AppColors.textDarkPrimary,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.chevron_right, size: 20),
+                    color: AppColors.textDarkSecondary,
+                    tooltip: 'Next Day',
+                    onPressed: () {
+                      ref.read(selectedDateProvider.notifier).state =
+                          selectedDate.add(const Duration(days: 1));
+                    },
+                  ),
+                ],
+              ),
             ),
+            const SizedBox(width: 12),
 
-          const SizedBox(width: 12),
+            // Jump to Today button
+            if (!isToday) ...[
+              OutlinedButton(
+                onPressed: () {
+                  ref.read(selectedDateProvider.notifier).state = DateTime.now();
+                },
+                style: OutlinedButton.styleFrom(
+                  side: const BorderSide(color: AppColors.darkBorder),
+                  foregroundColor: AppColors.textDarkSecondary,
+                ),
+                child: const Text('Today'),
+              ),
+              const SizedBox(width: 12),
+            ],
+          ],
 
           // Add Block Button
           ElevatedButton.icon(
@@ -381,9 +446,59 @@ class _SchedulePageState extends ConsumerState<SchedulePage> {
                     },
                   );
                 }
+                ref.invalidate(calendarEventsProvider);
                 if (ctx.mounted) Navigator.pop(ctx);
               },
               child: Text(editBlock == null ? 'Schedule' : 'Save Changes'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ViewToggleButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _ViewToggleButton({
+    required this.icon,
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(7),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: isSelected ? AppColors.primary : Colors.transparent,
+          borderRadius: BorderRadius.circular(7),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 15,
+              color: isSelected ? Colors.white : AppColors.textDarkSecondary,
+            ),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: TextStyle(
+                color: isSelected ? Colors.white : AppColors.textDarkSecondary,
+                fontSize: 12,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+              ),
             ),
           ],
         ),
@@ -423,6 +538,7 @@ class _ScheduleBlockCard extends ConsumerWidget {
                   ref
                       .read(scheduleNotifierProvider(dateStr).notifier)
                       .toggleComplete(block.id, !block.isCompleted);
+                  ref.invalidate(calendarEventsProvider);
                 },
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 150),
@@ -500,6 +616,7 @@ class _ScheduleBlockCard extends ConsumerWidget {
                 await ref
                     .read(scheduleNotifierProvider(dateStr).notifier)
                     .deleteBlock(block.id);
+                ref.invalidate(calendarEventsProvider);
               },
             ),
           ],
@@ -508,3 +625,4 @@ class _ScheduleBlockCard extends ConsumerWidget {
     );
   }
 }
+

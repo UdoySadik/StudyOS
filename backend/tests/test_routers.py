@@ -314,4 +314,52 @@ def test_study_sessions_endpoints():
     client.post("/system/reset")
 
 
+def test_calendar_endpoints():
+    client.post("/system/reset")
+
+    # 1. Setup roadmap and goal for October 2026
+    rm = client.post("/roadmaps/", json={"title": "Cloud Computing", "description": "AWS & Kubernetes"}).json()
+    client.post("/goals/", json={"roadmap_id": rm["id"], "target_date": "2026-10-25"})
+
+    # 2. Setup phase, topic, and study session for October 2026
+    ph = client.post("/phases/", json={"roadmap_id": rm["id"], "title": "Kubernetes"}).json()
+    tp = client.post("/topics/", json={"phase_id": ph["id"], "title": "Pods & Services"}).json()
+    client.post("/study-sessions/", json={
+        "topic_id": tp["id"],
+        "duration_seconds": 1800,
+        "logged_date": "2026-10-22",
+        "notes": "Configured Ingress controllers"
+    })
+
+    # 3. Setup schedule block for October 2026
+    client.post("/schedule/", json={
+        "scheduled_date": "2026-10-22",
+        "start_time": "10:00",
+        "end_time": "11:30",
+        "title": "Study Deployments",
+        "topic_id": tp["id"]
+    })
+
+    # 4. Fetch October 2026 events
+    cal_oct = client.get("/calendar/events?year=2026&month=10").json()
+    assert cal_oct["year"] == 2026
+    assert cal_oct["month"] == 10
+    assert len(cal_oct["goals"]) == 1
+    assert cal_oct["goals"][0]["roadmap_title"] == "Cloud Computing"
+    assert cal_oct["goals"][0]["target_date"] == "2026-10-25"
+    assert len(cal_oct["schedule_blocks"]) == 1
+    assert cal_oct["schedule_blocks"][0]["title"] == "Study Deployments"
+    assert len(cal_oct["study_sessions"]) == 1
+    assert cal_oct["study_sessions"][0]["topic_title"] == "Pods & Services"
+
+    # 5. Fetch November 2026 events (should be empty)
+    cal_nov = client.get("/calendar/events?year=2026&month=11").json()
+    assert len(cal_nov["goals"]) == 0
+    assert len(cal_nov["schedule_blocks"]) == 0
+    assert len(cal_nov["study_sessions"]) == 0
+
+    client.post("/system/reset")
+
+
+
 
