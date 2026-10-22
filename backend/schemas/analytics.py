@@ -68,3 +68,56 @@ class RoadmapBurndownResponse(BaseModel):
     projected_completion_date: Optional[str] = None
     phases: List[PhaseBurndownItem]
     recent_velocity: List[DailyVelocityItem]
+
+
+class DayStudyHourItem(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    date: str
+    day_of_month: int
+    day_label: str
+    study_seconds: int
+    study_hours: float
+    session_count: int
+
+
+class TopicStudyHourItem(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    topic_id: int
+    topic_title: str
+    phase_title: str
+    study_seconds: int
+    study_hours: float
+    percentage: float
+
+
+class WeekdayStudyHourItem(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    weekday_index: int
+    day_name: str
+    total_seconds: int
+    total_hours: float
+    session_count: int
+
+
+class MonthlyStudyHoursResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    year: int
+    month: int
+    month_name: str
+    roadmap_id: Optional[int] = None
+    total_seconds: int
+    total_hours: float
+    total_sessions: int
+    active_days_count: int
+    total_days_in_month: int
+    daily_average_hours: float
+    peak_day_date: Optional[str] = None
+    peak_day_hours: float = 0.0
+    daily_distribution: List[DayStudyHourItem]
+    topic_distribution: List[TopicStudyHourItem]
+    weekday_distribution: List[WeekdayStudyHourItem]
+

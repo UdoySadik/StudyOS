@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../shared/services/api_service.dart';
 import '../../analytics/application/streak_provider.dart';
+import '../../analytics/application/study_hours_provider.dart';
 import '../domain/study_session_model.dart';
 
 class TimerState {
@@ -96,6 +97,7 @@ class StudyTimerNotifier extends StateNotifier<TimerState> {
       _ref.invalidate(studySummaryProvider);
       _ref.invalidate(topicStudyStatsProvider(topicId));
       _ref.invalidate(streakProvider);
+      _ref.invalidate(studyHoursProvider);
     }
 
     resetTimer();

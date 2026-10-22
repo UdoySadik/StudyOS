@@ -1,7 +1,9 @@
+import calendar
 import math
+from collections import defaultdict
 from datetime import date, timedelta
 from typing import Dict, List, Optional, Set
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import func
 
@@ -19,6 +21,10 @@ from schemas.analytics import (
     PhaseBurndownItem,
     DailyVelocityItem,
     RoadmapBurndownResponse,
+    DayStudyHourItem,
+    TopicStudyHourItem,
+    WeekdayStudyHourItem,
+    MonthlyStudyHoursResponse,
 )
 
 router = APIRouter(prefix="/analytics", tags=["analytics"])
@@ -331,4 +337,143 @@ def get_roadmap_burndown(roadmap_id: int, db: Session = Depends(get_db)):
         phases=phases_burndown,
         recent_velocity=recent_velocity,
     )
+
+
+@router.get("/study-hours", response_model=MonthlyStudyHoursResponse)
+def get_monthly_study_hours(
+    year: Optional[int] = Query(None, description="Year (e.g. 2026)"),
+    month: Optional[int] = Query(None, description="Month (1-12)"),
+    roadmap_id: Optional[int] = Query(None, description="Optional filter by roadmap ID"),
+    db: Session = Depends(get_db),
+):
+    """Retrieve monthly study hours distribution, daily histogram, weekday patterns, and topic breakdowns."""
+    today = date.today()
+    target_year = year if year is not None else today.year
+    target_month = month if month is not None else today.month
+
+    if target_month < 1 or target_month > 12:
+        raise HTTPException(status_code=400, detail="Month must be between 1 and 12")
+
+    if roadmap_id is not None:
+        roadmap = db.query(Roadmap).filter(Roadmap.id == roadmap_id).first()
+        if not roadmap:
+            raise HTTPException(status_code=404, detail="Roadmap not found")
+
+    _, num_days = calendar.monthrange(target_year, target_month)
+    start_date = date(target_year, target_month, 1)
+    end_date = date(target_year, target_month, num_days)
+
+    query = (
+        db.query(StudySession)
+        .options(joinedload(StudySession.topic).joinedload(Topic.phase))
+        .filter(StudySession.logged_date >= start_date)
+        .filter(StudySession.logged_date <= end_date)
+    )
+
+    if roadmap_id is not None:
+        query = query.join(Topic).join(Phase).filter(Phase.roadmap_id == roadmap_id)
+
+    sessions = query.all()
+
+    total_seconds = sum(s.duration_seconds for s in sessions)
+    total_hours = round(total_seconds / 3600.0, 2)
+    total_sessions = len(sessions)
+
+    # Daily aggregation
+    daily_map = defaultdict(lambda: {"seconds": 0, "count": 0})
+    for s in sessions:
+        if s.logged_date:
+            daily_map[s.logged_date]["seconds"] += s.duration_seconds
+            daily_map[s.logged_date]["count"] += 1
+
+    daily_distribution: List[DayStudyHourItem] = []
+    day_abbrs = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+    for day in range(1, num_days + 1):
+        d = date(target_year, target_month, day)
+        sec = daily_map[d]["seconds"]
+        cnt = daily_map[d]["count"]
+        daily_distribution.append(
+            DayStudyHourItem(
+                date=d.isoformat(),
+                day_of_month=day,
+                day_label=day_abbrs[d.weekday()],
+                study_seconds=sec,
+                study_hours=round(sec / 3600.0, 2),
+                session_count=cnt,
+            )
+        )
+
+    active_days_count = sum(1 for d in daily_distribution if d.study_seconds > 0)
+    daily_avg = round(total_hours / active_days_count, 2) if active_days_count > 0 else 0.0
+
+    peak_day = max(daily_distribution, key=lambda x: x.study_seconds, default=None)
+    peak_day_date = peak_day.date if (peak_day and peak_day.study_seconds > 0) else None
+    peak_day_hours = peak_day.study_hours if (peak_day and peak_day.study_seconds > 0) else 0.0
+
+    # Topic aggregation
+    topic_map = defaultdict(lambda: {"title": "", "phase": "", "seconds": 0})
+    for s in sessions:
+        t = s.topic
+        if t:
+            topic_map[t.id]["title"] = t.title
+            topic_map[t.id]["phase"] = t.phase.title if t.phase else "General"
+            topic_map[t.id]["seconds"] += s.duration_seconds
+
+    topic_distribution: List[TopicStudyHourItem] = []
+    for t_id, t_info in sorted(topic_map.items(), key=lambda item: item[1]["seconds"], reverse=True):
+        sec = t_info["seconds"]
+        pct = round((sec / total_seconds * 100.0), 1) if total_seconds > 0 else 0.0
+        topic_distribution.append(
+            TopicStudyHourItem(
+                topic_id=t_id,
+                topic_title=t_info["title"],
+                phase_title=t_info["phase"],
+                study_seconds=sec,
+                study_hours=round(sec / 3600.0, 2),
+                percentage=pct,
+            )
+        )
+
+    # Weekday aggregation
+    weekday_names = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+    weekday_map = {i: {"seconds": 0, "count": 0} for i in range(7)}
+    for s in sessions:
+        if s.logged_date:
+            w = s.logged_date.weekday()
+            weekday_map[w]["seconds"] += s.duration_seconds
+            weekday_map[w]["count"] += 1
+
+    weekday_distribution: List[WeekdayStudyHourItem] = []
+    for i in range(7):
+        sec = weekday_map[i]["seconds"]
+        weekday_distribution.append(
+            WeekdayStudyHourItem(
+                weekday_index=i,
+                day_name=weekday_names[i],
+                total_seconds=sec,
+                total_hours=round(sec / 3600.0, 2),
+                session_count=weekday_map[i]["count"],
+            )
+        )
+
+    month_name = f"{calendar.month_name[target_month]} {target_year}"
+
+    return MonthlyStudyHoursResponse(
+        year=target_year,
+        month=target_month,
+        month_name=month_name,
+        roadmap_id=roadmap_id,
+        total_seconds=total_seconds,
+        total_hours=total_hours,
+        total_sessions=total_sessions,
+        active_days_count=active_days_count,
+        total_days_in_month=num_days,
+        daily_average_hours=daily_avg,
+        peak_day_date=peak_day_date,
+        peak_day_hours=peak_day_hours,
+        daily_distribution=daily_distribution,
+        topic_distribution=topic_distribution,
+        weekday_distribution=weekday_distribution,
+    )
+
 

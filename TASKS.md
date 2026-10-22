@@ -160,7 +160,7 @@
 
 ---
 
-## Section F: Milestone V1.3 — Analytics (In Progress)
+## Section F: Milestone V1.3 — Analytics (Completed 100%)
 
 - [x] **`TASK-V13-001` — Study Streaks & Daily Consistency Counter**
   - **Status:** `DONE-VERIFIED` | **Priority:** P2 | **Milestone:** V1.3 Analytics
@@ -172,7 +172,10 @@
   - **Description:** Implemented backend `/analytics/burndown/{roadmap_id}` endpoint delivering comprehensive phase burndown progress (order index, completed/remaining topics, progress percent, estimated days to finish per phase), 7-day velocity metrics (current pace vs required goal pace, days remaining, schedule status, projected finish date), and 7-day velocity activity breakdown. Built responsive Flutter `BurndownVelocityCard` on Dashboard featuring dual-column master/detail breakdown, status pill badges, phase completion progress bars, velocity statistics cards, and vertical bar velocity chart. Wired reactive cache invalidations across topic, phase, and goal mutations.
   - **Evidence:** `backend/routers/analytics.py`, `backend/schemas/analytics.py`, `frontend/lib/features/analytics/presentation/burndown_velocity_card.dart`, `frontend/lib/features/analytics/domain/burndown_model.dart`, `frontend/lib/features/analytics/application/burndown_provider.dart`, `frontend/test/burndown_test.dart`. Verified via pytest (100% pass, 9/9 tests), `flutter test` (100% pass, 14/14 tests), and `flutter analyze` (0 issues).
 
-- [ ] **`TASK-V13-003` — Monthly Study Hours Distribution** (`BACKLOG`, P3)
+- [x] **`TASK-V13-003` — Monthly Study Hours Distribution**
+  - **Status:** `DONE-VERIFIED` | **Priority:** P3 | **Milestone:** V1.3 Analytics
+  - **Description:** Implemented backend `/analytics/study-hours` endpoint computing month-by-month study volume (total hours/sessions, active days ratio, daily average, peak study date), day-by-day histogram breakdown across the full month (1..31), top topics studied by duration & percentage share, and 7-day Monday–Sunday weekday study habits. Built responsive Flutter `StudyHoursDistributionCard` on Dashboard with interactive month navigator (`< Month Year >`), 4-metric summary ribbon, dynamic bar chart histogram with tooltips, top topics progress shelf, and weekday habit patterns. Wired cache invalidations on timer session save.
+  - **Evidence:** `backend/routers/analytics.py`, `backend/schemas/analytics.py`, `frontend/lib/features/analytics/presentation/study_hours_distribution_card.dart`, `frontend/lib/features/analytics/domain/study_hours_model.dart`, `frontend/lib/features/analytics/application/study_hours_provider.dart`, `frontend/test/study_hours_test.dart`. Verified via pytest (100% pass, 10/10 tests), `flutter test` (100% pass, 19/19 tests), and `flutter analyze` (0 issues).
 
 ---
 

@@ -8,6 +8,7 @@ import '../../../shared/widgets/progress_bar.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../analytics/presentation/streak_card.dart';
 import '../../analytics/presentation/burndown_velocity_card.dart';
+import '../../analytics/presentation/study_hours_distribution_card.dart';
 
 class DashboardPage extends ConsumerWidget {
   const DashboardPage({super.key});
@@ -195,6 +196,9 @@ class _DashboardContent extends StatelessWidget {
 
             // Phase Burndown & Learning Velocity
             BurndownVelocityCard(roadmapId: summary.roadmapId),
+
+            // Monthly Study Hours Distribution
+            StudyHoursDistributionCard(roadmapId: summary.roadmapId),
 
             // Today's Focus
             if (summary.todaySuggestions.isNotEmpty) ...[

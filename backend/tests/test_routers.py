@@ -488,6 +488,92 @@ def test_burndown_velocity_endpoints():
     client.post("/system/reset")
 
 
+def test_monthly_study_hours_endpoints():
+    import calendar
+    from datetime import date
+    client.post("/system/reset")
+
+    today = date.today()
+    cur_year = today.year
+    cur_month = today.month
+    _, num_days = calendar.monthrange(cur_year, cur_month)
+
+    # 1. Empty state
+    res = client.get(f"/analytics/study-hours?year={cur_year}&month={cur_month}")
+    assert res.status_code == 200
+    data = res.json()
+    assert data["year"] == cur_year
+    assert data["month"] == cur_month
+    assert data["total_seconds"] == 0
+    assert data["total_hours"] == 0.0
+    assert data["total_sessions"] == 0
+    assert data["active_days_count"] == 0
+    assert data["total_days_in_month"] == num_days
+    assert len(data["daily_distribution"]) == num_days
+    assert len(data["weekday_distribution"]) == 7
+    assert len(data["topic_distribution"]) == 0
+
+    # 2. Setup Roadmap, Phase, and 2 Topics
+    rm = client.post("/roadmaps/", json={"title": "Distributed Systems", "description": "Raft"}).json()
+    rm_id = rm["id"]
+    ph = client.post("/phases/", json={"roadmap_id": rm_id, "title": "Consensus"}).json()
+    t1 = client.post("/topics/", json={"phase_id": ph["id"], "title": "Raft Leader Election"}).json()
+    t2 = client.post("/topics/", json={"phase_id": ph["id"], "title": "Log Replication"}).json()
+
+    # 3. Log sessions on 2 specific dates in current month
+    d1 = date(cur_year, cur_month, min(5, num_days))
+    d2 = date(cur_year, cur_month, min(12, num_days))
+
+    # Session 1: Topic 1, 3600s on d1
+    client.post("/study-sessions/", json={
+        "topic_id": t1["id"],
+        "duration_seconds": 3600,
+        "logged_date": d1.isoformat(),
+        "notes": "Elections logic"
+    })
+    # Session 2: Topic 1, 1800s on d1
+    client.post("/study-sessions/", json={
+        "topic_id": t1["id"],
+        "duration_seconds": 1800,
+        "logged_date": d1.isoformat(),
+        "notes": "Split vote cases"
+    })
+    # Session 3: Topic 2, 5400s on d2
+    client.post("/study-sessions/", json={
+        "topic_id": t2["id"],
+        "duration_seconds": 5400,
+        "logged_date": d2.isoformat(),
+        "notes": "RPC commit index"
+    })
+
+    # 4. Fetch monthly analytics
+    res = client.get(f"/analytics/study-hours?year={cur_year}&month={cur_month}")
+    assert res.status_code == 200
+    data = res.json()
+
+    assert data["total_seconds"] == 10800
+    assert data["total_hours"] == 3.0
+    assert data["total_sessions"] == 3
+    assert data["active_days_count"] == 2
+    assert data["daily_average_hours"] == 1.5
+    assert data["peak_day_hours"] == 1.5
+    assert len(data["topic_distribution"]) == 2
+    assert data["topic_distribution"][0]["study_seconds"] == 5400
+    assert data["topic_distribution"][0]["percentage"] == 50.0
+
+    # 5. Filter by roadmap_id
+    res_filtered = client.get(f"/analytics/study-hours?year={cur_year}&month={cur_month}&roadmap_id={rm_id}")
+    assert res_filtered.status_code == 200
+    assert res_filtered.json()["total_seconds"] == 10800
+
+    # 6. Error handling
+    assert client.get("/analytics/study-hours?month=13").status_code == 400
+    assert client.get("/analytics/study-hours?roadmap_id=99999").status_code == 404
+
+    client.post("/system/reset")
+
+
+
 
 
 
