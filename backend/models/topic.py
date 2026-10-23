@@ -39,3 +39,10 @@ class Topic(Base):
         back_populates="topic",
         cascade="all, delete-orphan",
     )
+    resources = relationship(
+        "Resource",
+        back_populates="topic",
+        cascade="all, delete-orphan",
+        order_by="Resource.created_at",
+    )
+

@@ -573,6 +573,83 @@ def test_monthly_study_hours_endpoints():
     client.post("/system/reset")
 
 
+def test_resource_endpoints():
+    client.post("/system/reset")
+
+    # 1. Setup hierarchy
+    rm = client.post("/roadmaps/", json={"title": "Cloud Systems", "description": "Cloud native"}).json()
+    ph = client.post("/phases/", json={"roadmap_id": rm["id"], "title": "Storage"}).json()
+    tp = client.post("/topics/", json={"phase_id": ph["id"], "title": "Distributed File Systems"}).json()
+    tp_id = tp["id"]
+
+    # 2. Empty list
+    res = client.get(f"/resources/topic/{tp_id}")
+    assert res.status_code == 200
+    assert res.json() == []
+
+    # 3. Create Resource 1: Book
+    r1 = client.post("/resources/", json={
+        "topic_id": tp_id,
+        "title": "Designing Data-Intensive Applications",
+        "resource_type": "book",
+        "url": "https://dataintensive.net",
+        "notes": "Chapters 5-7 on Replication"
+    }).json()
+    assert r1["id"] is not None
+    assert r1["title"] == "Designing Data-Intensive Applications"
+    assert r1["resource_type"] == "book"
+    assert r1["is_completed"] is False
+
+    # 4. Create Resource 2: Video
+    r2 = client.post("/resources/", json={
+        "topic_id": tp_id,
+        "title": "MIT 6.824 GFS Lecture",
+        "resource_type": "video",
+        "url": "https://youtube.com/watch?v=ep4E0h_BnhA",
+        "notes": "Master architecture"
+    }).json()
+    assert r2["id"] is not None
+    assert r2["resource_type"] == "video"
+
+    # 5. List resources
+    res_list = client.get(f"/resources/topic/{tp_id}").json()
+    assert len(res_list) == 2
+
+    # 6. Get single resource
+    res_single = client.get(f"/resources/{r1['id']}")
+    assert res_single.status_code == 200
+    assert res_single.json()["title"] == "Designing Data-Intensive Applications"
+
+    # 7. Update resource
+    res_updated = client.patch(f"/resources/{r1['id']}", json={
+        "title": "DDIA (O'Reilly)",
+        "notes": "Finished part 1"
+    }).json()
+    assert res_updated["title"] == "DDIA (O'Reilly)"
+    assert res_updated["notes"] == "Finished part 1"
+
+    # 8. Toggle complete
+    res_completed = client.patch(f"/resources/{r1['id']}/complete", json={"is_completed": True}).json()
+    assert res_completed["is_completed"] is True
+
+    # 9. Delete resource
+    del_res = client.delete(f"/resources/{r2['id']}")
+    assert del_res.status_code == 204
+
+    # 10. Verify deleted
+    assert client.get(f"/resources/{r2['id']}").status_code == 404
+    assert len(client.get(f"/resources/topic/{tp_id}").json()) == 1
+
+    # 11. Error handling: non-existent topic or resource
+    assert client.get("/resources/topic/99999").status_code == 404
+    assert client.post("/resources/", json={"topic_id": 99999, "title": "Missing"}).status_code == 404
+    assert client.patch("/resources/99999", json={"title": "Missing"}).status_code == 404
+    assert client.delete("/resources/99999").status_code == 404
+
+    client.post("/system/reset")
+
+
+
 
 
 

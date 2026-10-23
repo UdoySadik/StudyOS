@@ -4,6 +4,7 @@ import '../../roadmap/application/roadmap_provider.dart';
 import '../../roadmap/domain/roadmap_models.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../timer/application/timer_provider.dart';
+import '../../resources/presentation/resource_shelf_dialog.dart';
 
 class RoadmapPage extends ConsumerStatefulWidget {
   const RoadmapPage({super.key});
@@ -1123,6 +1124,14 @@ class _TopicActions extends ConsumerWidget {
                 behavior: SnackBarBehavior.floating,
               ),
             );
+          },
+        ),
+        IconButton(
+          icon: const Icon(Icons.shelves, size: 14),
+          color: const Color(0xFFF59E0B),
+          tooltip: 'Learning Resource Shelf (Books, Courses, PDFs)',
+          onPressed: () {
+            ResourceShelfDialog.show(context, topic.id, topic.title);
           },
         ),
         IconButton(

@@ -5,6 +5,7 @@ import '../../roadmap/application/roadmap_provider.dart';
 import '../../roadmap/domain/roadmap_models.dart';
 import '../application/notes_provider.dart';
 import '../../timer/application/timer_provider.dart';
+import '../../resources/presentation/resource_shelf_dialog.dart';
 import '../../../core/theme/app_theme.dart';
 
 class NotesPage extends ConsumerStatefulWidget {
@@ -375,6 +376,27 @@ class _NotesPageState extends ConsumerState<NotesPage> {
                           _selectedTopicTitle ?? 'Topic Study',
                         );
                   }
+                },
+              ),
+              const SizedBox(width: 8),
+
+              // Resource Shelf Button
+              OutlinedButton.icon(
+                icon: const Icon(Icons.shelves, size: 14, color: Color(0xFFF59E0B)),
+                label: const Text(
+                  'Resources',
+                  style: TextStyle(fontSize: 12, color: Color(0xFFF59E0B)),
+                ),
+                style: OutlinedButton.styleFrom(
+                  side: BorderSide(color: const Color(0xFFF59E0B).withValues(alpha: 0.4)),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                ),
+                onPressed: () {
+                  ResourceShelfDialog.show(
+                    context,
+                    topicId,
+                    _selectedTopicTitle ?? 'Topic',
+                  );
                 },
               ),
               const SizedBox(width: 16),

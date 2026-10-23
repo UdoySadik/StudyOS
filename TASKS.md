@@ -181,8 +181,12 @@
 
 ## Section G: Future Release Backlog (V1.4 onward)
 
-### V1.4 — Projects & Resources
-- [ ] **`TASK-V14-001` — Topic Learning Resource Shelf (Books, Course URLs, PDFs)** (`BACKLOG`, P2)
+### V1.4 — Projects & Resources (In Progress)
+- [x] **`TASK-V14-001` — Topic Learning Resource Shelf (Books, Course URLs, PDFs)**
+  - **Status:** `DONE-VERIFIED` | **Priority:** P2 | **Milestone:** V1.4 Projects & Resources
+  - **Description:** Implemented backend `Resource` ORM model, Pydantic schemas, and CRUD router (`GET /resources/topic/{id}`, `POST`, `PATCH`, `PATCH /complete`, `DELETE`) supporting multiple resource types (books, videos, articles, courses, PDFs, docs, GitHub repos). Created desktop Flutter `ResourceShelfDialog` with type selector chips, URL link copy with tooltip, study notes preview, completion checkboxes, and live progress bar. Integrated shelf access triggers across Roadmap cards, Compact Tree View (`_TopicActions`), and Notes workspace AppBar.
+  - **Evidence:** `backend/models/resource.py`, `backend/schemas/resource.py`, `backend/routers/resources.py`, `frontend/lib/features/resources/`, `roadmap_page.dart:1127-1135`, `notes_page.dart:380-405`, `frontend/test/resources_test.dart`. Verified via pytest (100% pass, 11/11 tests), `flutter test` (100% pass, 22/22 tests), and `flutter analyze` (0 issues).
+
 - [ ] **`TASK-V14-002` — Practice Project Tracker with GitHub Links** (`BACKLOG`, P2)
 
 ### V2.0 — Local AI Features
