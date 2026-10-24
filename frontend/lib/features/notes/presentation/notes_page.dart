@@ -7,6 +7,7 @@ import '../application/notes_provider.dart';
 import '../../timer/application/timer_provider.dart';
 import '../../resources/presentation/resource_shelf_dialog.dart';
 import '../../recall/presentation/recall_hub_page.dart';
+import 'note_ai_dialog.dart';
 import '../../../core/theme/app_theme.dart';
 
 class NotesPage extends ConsumerStatefulWidget {
@@ -419,6 +420,61 @@ class _NotesPageState extends ConsumerState<NotesPage> {
                     context,
                     preselectedTopicId: topicId,
                     preselectedTopicTitle: _selectedTopicTitle,
+                  );
+                },
+              ),
+              const SizedBox(width: 8),
+
+              // AI Assistant (Summarize & Explainer) Button
+              OutlinedButton.icon(
+                key: const Key('notes_ai_assistant_btn'),
+                icon: const Icon(Icons.auto_awesome_rounded, size: 14, color: Color(0xFF06B6D4)),
+                label: const Text(
+                  'AI Assistant',
+                  style: TextStyle(fontSize: 12, color: Color(0xFF06B6D4)),
+                ),
+                style: OutlinedButton.styleFrom(
+                  side: BorderSide(color: const Color(0xFF06B6D4).withValues(alpha: 0.4)),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                ),
+                onPressed: () {
+                  NoteAIDialog.show(
+                    context,
+                    topicId: topicId,
+                    topicTitle: _selectedTopicTitle,
+                    noteContent: _noteController.text,
+                    onInsertAtTop: (text) {
+                      setState(() {
+                        _noteController.text = '$text\n\n${_noteController.text}';
+                        _isSaving = true;
+                      });
+                      ref.read(topicNoteNotifierProvider(topicId).notifier).saveNoteDebounced(_noteController.text);
+                      Future.delayed(const Duration(milliseconds: 600), () {
+                        if (mounted) setState(() => _isSaving = false);
+                      });
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          backgroundColor: Color(0xFF10B981),
+                          content: Text('Summary inserted at the top of note!'),
+                        ),
+                      );
+                    },
+                    onAppendToEnd: (text) {
+                      setState(() {
+                        _noteController.text = '${_noteController.text.trim()}\n\n$text\n';
+                        _isSaving = true;
+                      });
+                      ref.read(topicNoteNotifierProvider(topicId).notifier).saveNoteDebounced(_noteController.text);
+                      Future.delayed(const Duration(milliseconds: 600), () {
+                        if (mounted) setState(() => _isSaving = false);
+                      });
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          backgroundColor: Color(0xFF10B981),
+                          content: Text('Content appended to note!'),
+                        ),
+                      );
+                    },
                   );
                 },
               ),

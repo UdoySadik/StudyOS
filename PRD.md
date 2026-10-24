@@ -222,10 +222,10 @@ The following table reflects the **complete, audited status** of all V1.0 featur
 - **Topic Learning Resource Shelf (`TASK-V14-001` - DONE-VERIFIED):** Resource repository linked to topics (Books, PDFs, documentation links, YouTube courses, GitHub links) with type selector chips, completion tracking, and quick shelf launcher.
 - **Practice Project Tracker with GitHub Links (`TASK-V14-002` - DONE-VERIFIED):** Project portfolio tracker with GitHub repo links, difficulty ratings, tech stack badges, status overview cards, clipboard URL copy, and roadmap navigation shortcut.
 
-### Milestone V2.0 — Local AI Features (In Progress)
+### Completed: Milestone V2.0 — Local AI Features (DONE-VERIFIED)
 - **Offline LLM Study Planner (`TASK-V20-001` - DONE-VERIFIED):** Intelligent study plan generator integrated with local Ollama (`http://127.0.0.1:11434`) and built-in offline heuristic curriculum engine, featuring live Ollama connection status, customizable parameters, Markdown plan preview, and one-click "Convert to Roadmap" action.
 - **Automated Flashcard & Quiz Generation from Notes (`TASK-V20-002` - DONE-VERIFIED):** Generate active recall flashcard decks (with 3D animated flip cards and mastery tracking) and interactive multiple-choice quizzes with explanations directly from study notes or manual input via local Ollama and offline heuristic extractor.
-- **AI Note Summarizer & Concept Explainer (`TASK-V20-003` - Backlog):** Deep concept explainer and study note summarizer.
+- **AI Note Summarizer & Concept Explainer (`TASK-V20-003` - DONE-VERIFIED):** Distill study notes into executive briefs, key takeaways, bullet points, or cheat sheets, and explain complex concepts across four depths (Beginner/ELI5, Intermediate, Technical Deep Dive, Analogy) with one-click insertion and clipboard export.
 
 ### Proposed V2.x — Document Intelligence
 - Local RAG (Retrieval-Augmented Generation) over study PDFs and textbooks.

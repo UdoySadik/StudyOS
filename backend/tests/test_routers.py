@@ -985,6 +985,137 @@ def test_study_recall_endpoints():
     client.post("/system/reset")
 
 
+def test_note_ai_endpoints():
+    client.post("/system/reset")
+
+    # 1. Summarize with direct markdown note content (Key Takeaways style)
+    note_text = (
+        "# Distributed Systems and Consensus\n\n"
+        "**Raft Protocol**: A consensus algorithm designed to be easy to understand.\n"
+        "**Leader Election**: Randomized election timeouts avoid split-votes between candidates.\n"
+        "**Log Replication**: Leaders accept entries from clients and replicate them to followers.\n"
+        "Safety is guaranteed through state machine safety and leader completeness.\n"
+        "Network partitions are handled gracefully by majority quorum voting.\n"
+    )
+
+    res_takeaways = client.post("/note-ai/summarize", json={
+        "note_content": note_text,
+        "summary_style": "key_takeaways",
+        "max_bullets": 4,
+    })
+    assert res_takeaways.status_code == 200
+    data_t = res_takeaways.json()
+    assert "### 💡 Key Takeaways" in data_t["summary_markdown"]
+    assert len(data_t["key_takeaways"]) > 0
+    assert data_t["word_count"] > 10
+    assert data_t["reading_time_minutes"] >= 0.1
+    assert data_t["model_used"] in ["builtin-offline"] or data_t["model_used"].startswith("ollama:")
+
+    # 2. Summarize with Executive style
+    res_exec = client.post("/note-ai/summarize", json={
+        "note_content": note_text,
+        "summary_style": "executive",
+        "max_bullets": 3,
+    })
+    assert res_exec.status_code == 200
+    assert "Executive Summary" in res_exec.json()["summary_markdown"]
+
+    # 3. Summarize with Bullet Points style
+    res_bullets = client.post("/note-ai/summarize", json={
+        "note_content": note_text,
+        "summary_style": "bullet_points",
+        "max_bullets": 3,
+    })
+    assert res_bullets.status_code == 200
+    assert "Key Points Summary" in res_bullets.json()["summary_markdown"]
+
+    # 4. Summarize with Cheat Sheet style
+    res_cheat = client.post("/note-ai/summarize", json={
+        "note_content": note_text,
+        "summary_style": "cheat_sheet",
+        "max_bullets": 3,
+    })
+    assert res_cheat.status_code == 200
+    assert "Cheat Sheet" in res_cheat.json()["summary_markdown"]
+    assert "|" in res_cheat.json()["summary_markdown"]
+
+    # 5. Summarize via topic_id (DB retrieval)
+    rm = client.post("/roadmaps/", json={"title": "Systems", "description": "OS"}).json()
+    ph = client.post("/phases/", json={"roadmap_id": rm["id"], "title": "Kernel"}).json()
+    tp = client.post("/topics/", json={"phase_id": ph["id"], "title": "Memory Paging"}).json()
+    tp_id = tp["id"]
+
+    # Before note exists -> 400
+    err_res = client.post("/note-ai/summarize", json={"topic_id": tp_id})
+    assert err_res.status_code == 400
+
+    # Create note for topic
+    client.put(f"/notes/topic/{tp_id}", json={
+        "content": (
+            "# Virtual Memory & Paging\n\n"
+            "**Page Table**: Translates virtual addresses to physical frame addresses.\n"
+            "**TLB**: Translation Lookaside Buffer caches recent translations.\n"
+            "Page faults occur when requested page is not present in physical RAM.\n"
+        )
+    })
+
+    # Now summarize via topic_id
+    res_db = client.post("/note-ai/summarize", json={
+        "topic_id": tp_id,
+        "summary_style": "key_takeaways",
+    })
+    assert res_db.status_code == 200
+    assert "Memory Paging" in res_db.json()["summary_markdown"]
+    assert len(res_db.json()["key_takeaways"]) >= 1
+
+    # 6. Concept Explainer: Beginner depth
+    res_beg = client.post("/note-ai/explain", json={
+        "concept": "Event Loop",
+        "depth": "beginner",
+    })
+    assert res_beg.status_code == 200
+    data_beg = res_beg.json()
+    assert data_beg["concept"] == "Event Loop"
+    assert data_beg["depth"] == "beginner"
+    assert "Beginner Guide" in data_beg["explanation_markdown"]
+    assert data_beg["analogy"] is not None
+    assert len(data_beg["key_points"]) > 0
+
+    # 7. Concept Explainer: Expert depth
+    res_exp = client.post("/note-ai/explain", json={
+        "concept": "Lock-Free Ring Buffer",
+        "depth": "expert",
+    })
+    assert res_exp.status_code == 200
+    data_exp = res_exp.json()
+    assert "Technical Deep Dive" in data_exp["explanation_markdown"]
+    assert data_exp["example_snippet"] is not None
+
+    # 8. Concept Explainer: Analogies depth
+    res_ana = client.post("/note-ai/explain", json={
+        "concept": "Garbage Collection",
+        "depth": "analogies",
+    })
+    assert res_ana.status_code == 200
+    assert "Mental Model & Analogy" in res_ana.json()["explanation_markdown"]
+
+    # 9. Concept Explainer: Intermediate depth
+    res_mid = client.post("/note-ai/explain", json={
+        "concept": "Binary Search",
+        "depth": "intermediate",
+    })
+    assert res_mid.status_code == 200
+    assert "Concept Breakdown" in res_mid.json()["explanation_markdown"]
+
+    # 10. Error cases
+    assert client.post("/note-ai/summarize", json={}).status_code == 400
+    assert client.post("/note-ai/summarize", json={"topic_id": 99999}).status_code == 404
+    assert client.post("/note-ai/explain", json={"concept": "   "}).status_code == 400
+    assert client.post("/note-ai/explain", json={"concept": "a"}).status_code == 422  # min_length=2
+
+    client.post("/system/reset")
+
+
 
 
 
