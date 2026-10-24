@@ -6,6 +6,7 @@ import '../../roadmap/domain/roadmap_models.dart';
 import '../application/notes_provider.dart';
 import '../../timer/application/timer_provider.dart';
 import '../../resources/presentation/resource_shelf_dialog.dart';
+import '../../recall/presentation/recall_hub_page.dart';
 import '../../../core/theme/app_theme.dart';
 
 class NotesPage extends ConsumerStatefulWidget {
@@ -396,6 +397,28 @@ class _NotesPageState extends ConsumerState<NotesPage> {
                     context,
                     topicId,
                     _selectedTopicTitle ?? 'Topic',
+                  );
+                },
+              ),
+              const SizedBox(width: 8),
+
+              // AI Recall Generator Button
+              OutlinedButton.icon(
+                key: const Key('notes_ai_recall_btn'),
+                icon: const Icon(Icons.psychology_outlined, size: 14, color: AppColors.primaryLight),
+                label: const Text(
+                  'AI Recall',
+                  style: TextStyle(fontSize: 12, color: AppColors.primaryLight),
+                ),
+                style: OutlinedButton.styleFrom(
+                  side: BorderSide(color: AppColors.primary.withValues(alpha: 0.4)),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                ),
+                onPressed: () {
+                  GenerateRecallDialog.show(
+                    context,
+                    preselectedTopicId: topicId,
+                    preselectedTopicTitle: _selectedTopicTitle,
                   );
                 },
               ),

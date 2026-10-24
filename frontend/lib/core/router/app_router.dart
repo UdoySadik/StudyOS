@@ -6,6 +6,7 @@ import '../../features/goals/presentation/goals_page.dart';
 import '../../features/notes/presentation/notes_page.dart';
 import '../../features/projects/presentation/projects_page.dart';
 import '../../features/ai_planner/presentation/ai_planner_page.dart';
+import '../../features/recall/presentation/recall_hub_page.dart';
 import '../../features/settings/presentation/settings_page.dart';
 import '../../shared/widgets/app_shell.dart';
 
@@ -62,6 +63,13 @@ final GoRouter appRouter = GoRouter(
           name: 'ai-planner',
           pageBuilder: (context, state) => const NoTransitionPage(
             child: AIPlannerPage(),
+          ),
+        ),
+        GoRoute(
+          path: '/recall',
+          name: 'recall',
+          pageBuilder: (context, state) => const NoTransitionPage(
+            child: RecallHubPage(),
           ),
         ),
         GoRoute(

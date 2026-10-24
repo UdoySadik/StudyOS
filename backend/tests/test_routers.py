@@ -849,6 +849,143 @@ def test_ai_planner_endpoints():
     client.post("/system/reset")
 
 
+def test_study_recall_endpoints():
+    # 0. Clean reset
+    client.post("/system/reset")
+
+    # 1. Setup Roadmap, Phase, Topic, Note
+    rm = client.post("/roadmaps/", json={"title": "Distributed Systems"}).json()
+    rm_id = rm["id"]
+
+    ph = client.post("/phases/", json={"roadmap_id": rm_id, "title": "Consensus", "order_index": 1}).json()
+    ph_id = ph["id"]
+
+    tp = client.post("/topics/", json={"phase_id": ph_id, "title": "Raft Protocol & Log Replication", "order_index": 1}).json()
+    tp_id = tp["id"]
+
+    note_text = (
+        "# Raft Protocol Overview\n\n"
+        "- **Leader Election**: State machine transition when heartbeat timeout expires\n"
+        "- **Log Replication**: Two-phase append entries accepted by majority quorum\n"
+        "- **Term Counter**: Monotonically increasing logical clock\n"
+        "- **Commit Index**: Index of highest log entry known to be committed\n\n"
+        "## Key Invariants\n"
+        "- Election Safety: At most one leader can be elected in a given term\n"
+        "- Leader Append-Only: A leader never overwrites or truncates its log\n"
+    )
+
+    client.put(f"/notes/{tp_id}", json={"content": note_text})
+
+    # 2. Validation error: empty payload
+    assert client.post("/recall/generate", json={}).status_code == 400
+
+    # 3. Generate flashcards and quiz from topic note
+    gen_res = client.post("/recall/generate", json={
+        "topic_id": tp_id,
+        "count": 4,
+        "generate_flashcards": True,
+        "generate_quiz": True,
+    })
+    assert gen_res.status_code == 201
+    gen_data = gen_res.json()
+    assert gen_data["generated_cards_count"] >= 3
+    assert gen_data["generated_questions_count"] >= 3
+    assert gen_data["deck"] is not None
+    assert gen_data["quiz"] is not None
+
+    deck_id = gen_data["deck"]["id"]
+    quiz_id = gen_data["quiz"]["id"]
+    assert gen_data["deck"]["topic_title"] == "Raft Protocol & Log Replication"
+    assert gen_data["quiz"]["topic_title"] == "Raft Protocol & Log Replication"
+
+    # 4. List decks
+    decks_list = client.get("/recall/decks/").json()
+    assert len(decks_list) == 1
+    assert decks_list[0]["id"] == deck_id
+
+    # Filter decks by topic_id
+    filtered_decks = client.get(f"/recall/decks/?topic_id={tp_id}").json()
+    assert len(filtered_decks) == 1
+
+    # 5. Get deck by ID
+    single_deck = client.get(f"/recall/decks/{deck_id}").json()
+    assert single_deck["id"] == deck_id
+    assert len(single_deck["cards"]) >= 3
+    card_id = single_deck["cards"][0]["id"]
+
+    # 6. Add card to deck
+    new_card_res = client.post(f"/recall/decks/{deck_id}/cards", json={
+        "front": "What is Joint Consensus?",
+        "back": "Configuration change transition state during cluster membership reconfiguration",
+    })
+    assert new_card_res.status_code == 201
+    assert new_card_res.json()["front"] == "What is Joint Consensus?"
+
+    # 7. Toggle card mastery
+    mastery_res = client.patch(f"/recall/cards/{card_id}/mastery?is_mastered=true")
+    assert mastery_res.status_code == 200
+    assert mastery_res.json()["is_mastered"] is True
+    assert mastery_res.json()["review_count"] == 1
+
+    # Verify deck mastered_cards count reflects change
+    updated_deck = client.get(f"/recall/decks/{deck_id}").json()
+    assert updated_deck["mastered_cards"] == 1
+
+    # 8. Delete card
+    del_card = client.delete(f"/recall/cards/{card_id}")
+    assert del_card.status_code == 204
+
+    # 9. List quizzes
+    quizzes_list = client.get("/recall/quizzes/").json()
+    assert len(quizzes_list) == 1
+    assert quizzes_list[0]["id"] == quiz_id
+
+    # 10. Get single quiz
+    single_quiz = client.get(f"/recall/quizzes/{quiz_id}").json()
+    assert single_quiz["id"] == quiz_id
+    assert len(single_quiz["questions"]) >= 3
+    first_q = single_quiz["questions"][0]
+    assert len(first_q["options"]) == 4
+    assert 0 <= first_q["correct_index"] <= 3
+
+    # 11. Add question to quiz
+    add_q_res = client.post(f"/recall/quizzes/{quiz_id}/questions", json={
+        "question": "What happens if candidate split-vote occurs?",
+        "options": ["Election times out and new term begins", "System halts", "Random node chosen", "Leader resets term"],
+        "correct_index": 0,
+        "explanation": "Randomized election timeouts resolve split votes by breaking symmetry",
+    })
+    assert add_q_res.status_code == 201
+    q_id = add_q_res.json()["id"]
+
+    # 12. Delete question
+    assert client.delete(f"/recall/questions/{q_id}").status_code == 204
+
+    # 13. Create manual deck and quiz
+    custom_deck = client.post("/recall/decks/", json={
+        "title": "Custom Algorithm Deck",
+        "cards": [{"front": "Front 1", "back": "Back 1"}],
+    }).json()
+    assert custom_deck["id"] is not None
+    assert custom_deck["total_cards"] == 1
+
+    # 14. Delete deck and quiz
+    assert client.delete(f"/recall/decks/{deck_id}").status_code == 204
+    assert client.get(f"/recall/decks/{deck_id}").status_code == 404
+    assert client.delete(f"/recall/quizzes/{quiz_id}").status_code == 204
+    assert client.get(f"/recall/quizzes/{quiz_id}").status_code == 404
+
+    # 15. 404 error cases
+    assert client.get("/recall/decks/99999").status_code == 404
+    assert client.get("/recall/quizzes/99999").status_code == 404
+    assert client.delete("/recall/cards/99999").status_code == 404
+    assert client.delete("/recall/questions/99999").status_code == 404
+
+    # Cleanup
+    client.post("/system/reset")
+
+
+
 
 
 

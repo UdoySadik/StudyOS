@@ -224,7 +224,7 @@ The following table reflects the **complete, audited status** of all V1.0 featur
 
 ### Milestone V2.0 — Local AI Features (In Progress)
 - **Offline LLM Study Planner (`TASK-V20-001` - DONE-VERIFIED):** Intelligent study plan generator integrated with local Ollama (`http://127.0.0.1:11434`) and built-in offline heuristic curriculum engine, featuring live Ollama connection status, customizable parameters, Markdown plan preview, and one-click "Convert to Roadmap" action.
-- **Automated Flashcard & Quiz Generation from Notes (`TASK-V20-002` - Backlog):** Generate active recall quizzes from markdown notes.
+- **Automated Flashcard & Quiz Generation from Notes (`TASK-V20-002` - DONE-VERIFIED):** Generate active recall flashcard decks (with 3D animated flip cards and mastery tracking) and interactive multiple-choice quizzes with explanations directly from study notes or manual input via local Ollama and offline heuristic extractor.
 - **AI Note Summarizer & Concept Explainer (`TASK-V20-003` - Backlog):** Deep concept explainer and study note summarizer.
 
 ### Proposed V2.x — Document Intelligence

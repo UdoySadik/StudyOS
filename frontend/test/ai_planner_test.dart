@@ -5,7 +5,6 @@ import 'package:studyos/features/ai_planner/application/ai_planner_provider.dart
 import 'package:studyos/features/ai_planner/domain/study_plan_model.dart';
 import 'package:studyos/features/ai_planner/presentation/ai_planner_page.dart';
 import 'package:studyos/features/roadmap/application/roadmap_provider.dart';
-import 'package:studyos/features/roadmap/domain/roadmap_models.dart';
 
 void main() {
   group('StudyPlanModel Domain Tests', () {
@@ -69,7 +68,7 @@ void main() {
       await tester.binding.setSurfaceSize(const Size(1366, 900));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
-      final mockOllama = const OllamaStatusModel(
+      const mockOllama = OllamaStatusModel(
         connected: false,
         endpoint: 'http://127.0.0.1:11434',
         models: [],
@@ -111,13 +110,13 @@ void main() {
       await tester.binding.setSurfaceSize(const Size(1366, 900));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
-      final mockOllama = const OllamaStatusModel(
+      const mockOllama = OllamaStatusModel(
         connected: true,
         endpoint: 'http://127.0.0.1:11434',
         models: ['llama3.2', 'mistral'],
       );
 
-      final mockPlan = const StudyPlanModel(
+      const mockPlan = StudyPlanModel(
         id: 77,
         title: 'Distributed Systems — 4W Plan',
         subject: 'Distributed Systems',
@@ -159,7 +158,7 @@ void main() {
       await tester.binding.setSurfaceSize(const Size(1366, 900));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
-      final mockPlan = const StudyPlanModel(
+      const mockPlan = StudyPlanModel(
         id: 88,
         title: 'Kubernetes Deep Dive',
         subject: 'Kubernetes',
