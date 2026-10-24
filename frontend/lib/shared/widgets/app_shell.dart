@@ -67,11 +67,18 @@ const _navItems = [
     shortcut: 'Ctrl+6',
   ),
   _NavItem(
+    label: 'AI Planner',
+    icon: Icons.auto_awesome_outlined,
+    activeIcon: Icons.auto_awesome,
+    route: '/ai-planner',
+    shortcut: 'Ctrl+7',
+  ),
+  _NavItem(
     label: 'Settings',
     icon: Icons.settings_outlined,
     activeIcon: Icons.settings,
     route: '/settings',
-    shortcut: 'Ctrl+7',
+    shortcut: 'Ctrl+8',
   ),
 ];
 
@@ -92,7 +99,8 @@ class AppShell extends ConsumerWidget {
         const SingleActivator(LogicalKeyboardKey.digit4, control: true): () => context.go('/goals'),
         const SingleActivator(LogicalKeyboardKey.digit5, control: true): () => context.go('/notes'),
         const SingleActivator(LogicalKeyboardKey.digit6, control: true): () => context.go('/projects'),
-        const SingleActivator(LogicalKeyboardKey.digit7, control: true): () => context.go('/settings'),
+        const SingleActivator(LogicalKeyboardKey.digit7, control: true): () => context.go('/ai-planner'),
+        const SingleActivator(LogicalKeyboardKey.digit8, control: true): () => context.go('/settings'),
       },
       child: Focus(
         autofocus: true,

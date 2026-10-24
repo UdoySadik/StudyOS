@@ -5,6 +5,7 @@ import '../../features/schedule/presentation/schedule_page.dart';
 import '../../features/goals/presentation/goals_page.dart';
 import '../../features/notes/presentation/notes_page.dart';
 import '../../features/projects/presentation/projects_page.dart';
+import '../../features/ai_planner/presentation/ai_planner_page.dart';
 import '../../features/settings/presentation/settings_page.dart';
 import '../../shared/widgets/app_shell.dart';
 
@@ -54,6 +55,13 @@ final GoRouter appRouter = GoRouter(
           name: 'projects',
           pageBuilder: (context, state) => const NoTransitionPage(
             child: ProjectsPage(),
+          ),
+        ),
+        GoRoute(
+          path: '/ai-planner',
+          name: 'ai-planner',
+          pageBuilder: (context, state) => const NoTransitionPage(
+            child: AIPlannerPage(),
           ),
         ),
         GoRoute(

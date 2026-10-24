@@ -222,10 +222,10 @@ The following table reflects the **complete, audited status** of all V1.0 featur
 - **Topic Learning Resource Shelf (`TASK-V14-001` - DONE-VERIFIED):** Resource repository linked to topics (Books, PDFs, documentation links, YouTube courses, GitHub links) with type selector chips, completion tracking, and quick shelf launcher.
 - **Practice Project Tracker with GitHub Links (`TASK-V14-002` - DONE-VERIFIED):** Project portfolio tracker with GitHub repo links, difficulty ratings, tech stack badges, status overview cards, clipboard URL copy, and roadmap navigation shortcut.
 
-### Proposed V2.0 — Local AI Features
-- Local LLM study planner (Ollama/Llama-cpp).
-- Automated quiz generator from topic notes.
-- Markdown note summarizer.
+### Milestone V2.0 — Local AI Features (In Progress)
+- **Offline LLM Study Planner (`TASK-V20-001` - DONE-VERIFIED):** Intelligent study plan generator integrated with local Ollama (`http://127.0.0.1:11434`) and built-in offline heuristic curriculum engine, featuring live Ollama connection status, customizable parameters, Markdown plan preview, and one-click "Convert to Roadmap" action.
+- **Automated Flashcard & Quiz Generation from Notes (`TASK-V20-002` - Backlog):** Generate active recall quizzes from markdown notes.
+- **AI Note Summarizer & Concept Explainer (`TASK-V20-003` - Backlog):** Deep concept explainer and study note summarizer.
 
 ### Proposed V2.x — Document Intelligence
 - Local RAG (Retrieval-Augmented Generation) over study PDFs and textbooks.

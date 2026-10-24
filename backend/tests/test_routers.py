@@ -766,6 +766,90 @@ def test_project_endpoints():
     client.post("/system/reset")
 
 
+def test_ai_planner_endpoints():
+    # 0. Clean reset
+    client.post("/system/reset")
+
+    # 1. Ollama status check
+    status_res = client.get("/ai/ollama/status")
+    assert status_res.status_code == 200
+    status_data = status_res.json()
+    assert "connected" in status_data
+    assert "endpoint" in status_data
+    assert "models" in status_data
+
+    # 2. Validation error on empty subject
+    assert client.post("/ai/plans/generate", json={"subject": "   "}).status_code == 400
+
+    # 3. Generate Study Plan (runs built-in offline generator if Ollama is not running)
+    gen_res = client.post("/ai/plans/generate", json={
+        "subject": "Distributed Systems with Raft",
+        "proficiency": "advanced",
+        "hours_per_week": 15,
+        "target_weeks": 4,
+        "focus_area": "Consensus, Replication & Benchmarking",
+        "custom_instructions": "Focus on fault tolerance and network partitions",
+    })
+    assert gen_res.status_code == 201
+    plan = gen_res.json()
+    plan_id = plan["id"]
+    assert plan["subject"] == "Distributed Systems with Raft"
+    assert plan["proficiency"] == "advanced"
+    assert plan["hours_per_week"] == 15
+    assert plan["target_weeks"] == 4
+    assert len(plan["plan_markdown"]) > 100
+    assert plan["structured_data"] is not None
+    assert len(plan["structured_data"]["phases"]) >= 2
+    assert plan["roadmap_id"] is None
+
+    # 4. List plans
+    plans_list = client.get("/ai/plans/").json()
+    assert len(plans_list) == 1
+    assert plans_list[0]["id"] == plan_id
+
+    # 5. Get plan by ID
+    single_plan = client.get(f"/ai/plans/{plan_id}")
+    assert single_plan.status_code == 200
+    assert single_plan.json()["id"] == plan_id
+
+    # 6. Import Plan as Active Roadmap
+    import_res = client.post(f"/ai/plans/{plan_id}/import-roadmap")
+    assert import_res.status_code == 201
+    import_data = import_res.json()
+    roadmap_id = import_data["roadmap_id"]
+    assert import_data["phases_created"] >= 2
+    assert import_data["topics_created"] >= 4
+
+    # Verify roadmap exists in database
+    rm_res = client.get(f"/roadmaps/{roadmap_id}")
+    assert rm_res.status_code == 200
+    assert "Distributed Systems with Raft" in rm_res.json()["title"]
+
+    # Verify practice projects auto-created and linked
+    proj_res = client.get(f"/projects/?roadmap_id={roadmap_id}")
+    assert proj_res.status_code == 200
+    assert len(proj_res.json()) >= 1
+
+    # Verify plan now references the created roadmap
+    updated_plan = client.get(f"/ai/plans/{plan_id}").json()
+    assert updated_plan["roadmap_id"] == roadmap_id
+    assert updated_plan["roadmap_title"] is not None
+
+    # 7. Delete plan
+    del_res = client.delete(f"/ai/plans/{plan_id}")
+    assert del_res.status_code == 204
+    assert client.get(f"/ai/plans/{plan_id}").status_code == 404
+
+    # 8. Error cases: 404 for missing plan
+    assert client.get("/ai/plans/99999").status_code == 404
+    assert client.delete("/ai/plans/99999").status_code == 404
+    assert client.post("/ai/plans/99999/import-roadmap").status_code == 404
+
+    # Cleanup
+    client.post("/system/reset")
+
+
+
 
 
 
