@@ -181,13 +181,16 @@
 
 ## Section G: Future Release Backlog (V1.4 onward)
 
-### V1.4 — Projects & Resources (In Progress)
+### V1.4 — Projects & Resources (Completed - 100% DONE-VERIFIED)
 - [x] **`TASK-V14-001` — Topic Learning Resource Shelf (Books, Course URLs, PDFs)**
   - **Status:** `DONE-VERIFIED` | **Priority:** P2 | **Milestone:** V1.4 Projects & Resources
   - **Description:** Implemented backend `Resource` ORM model, Pydantic schemas, and CRUD router (`GET /resources/topic/{id}`, `POST`, `PATCH`, `PATCH /complete`, `DELETE`) supporting multiple resource types (books, videos, articles, courses, PDFs, docs, GitHub repos). Created desktop Flutter `ResourceShelfDialog` with type selector chips, URL link copy with tooltip, study notes preview, completion checkboxes, and live progress bar. Integrated shelf access triggers across Roadmap cards, Compact Tree View (`_TopicActions`), and Notes workspace AppBar.
   - **Evidence:** `backend/models/resource.py`, `backend/schemas/resource.py`, `backend/routers/resources.py`, `frontend/lib/features/resources/`, `roadmap_page.dart:1127-1135`, `notes_page.dart:380-405`, `frontend/test/resources_test.dart`. Verified via pytest (100% pass, 11/11 tests), `flutter test` (100% pass, 22/22 tests), and `flutter analyze` (0 issues).
 
-- [ ] **`TASK-V14-002` — Practice Project Tracker with GitHub Links** (`BACKLOG`, P2)
+- [x] **`TASK-V14-002` — Practice Project Tracker with GitHub Links**
+  - **Status:** `DONE-VERIFIED` | **Priority:** P2 | **Milestone:** V1.4 Projects & Resources
+  - **Description:** Implemented practice project portfolio system linking projects to roadmaps and topics. Backend provides `Project` SQLAlchemy model, Pydantic schemas, and `/projects/` CRUD router with roadmap/topic/status filters, completion timestamp tracking, and validation. Frontend introduces dedicated `ProjectsPage` (shortcut `Ctrl+6`), 4 metric overview cards (Total Projects, In Progress, Completed, Completion Rate), interactive filter strip with search, status tabs (All, In Progress, Completed, Not Started, On Hold), roadmap dropdown, and project cards with difficulty badges, tech stack chips, one-click status toggling, and GitHub/Live Demo link copying with clipboard toast notifications. Also integrated a direct Practice Projects shortcut trigger in Roadmap Compact Tree View (`_TopicActions`).
+  - **Evidence:** `backend/models/project.py`, `backend/schemas/project.py`, `backend/routers/projects.py`, `backend/tests/test_routers.py` (`test_project_endpoints`), `frontend/lib/features/projects/domain/project_model.dart`, `frontend/lib/features/projects/application/projects_provider.dart`, `frontend/lib/features/projects/presentation/projects_page.dart`, `frontend/lib/core/router/app_router.dart`, `frontend/lib/shared/widgets/app_shell.dart`, `frontend/test/projects_test.dart`. Verified via pytest (12/12 passed), `flutter test` (28/28 passed), and `flutter analyze` (0 issues).
 
 ### V2.0 — Local AI Features
 - [ ] **`TASK-V20-001` — Offline LLM Study Planner (Ollama Integration)** (`BACKLOG`, P2)

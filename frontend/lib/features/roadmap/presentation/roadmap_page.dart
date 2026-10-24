@@ -5,6 +5,8 @@ import '../../roadmap/domain/roadmap_models.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../timer/application/timer_provider.dart';
 import '../../resources/presentation/resource_shelf_dialog.dart';
+import '../../projects/application/projects_provider.dart';
+import 'package:go_router/go_router.dart';
 
 class RoadmapPage extends ConsumerStatefulWidget {
   const RoadmapPage({super.key});
@@ -1132,6 +1134,15 @@ class _TopicActions extends ConsumerWidget {
           tooltip: 'Learning Resource Shelf (Books, Courses, PDFs)',
           onPressed: () {
             ResourceShelfDialog.show(context, topic.id, topic.title);
+          },
+        ),
+        IconButton(
+          icon: const Icon(Icons.code_rounded, size: 14),
+          color: const Color(0xFF6366F1),
+          tooltip: 'Practice Projects',
+          onPressed: () {
+            ref.read(projectSearchQueryProvider.notifier).state = topic.title;
+            context.go('/projects');
           },
         ),
         IconButton(

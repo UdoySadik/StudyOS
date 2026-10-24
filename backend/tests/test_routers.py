@@ -649,6 +649,124 @@ def test_resource_endpoints():
     client.post("/system/reset")
 
 
+def test_project_endpoints():
+    # 0. Clean reset
+    client.post("/system/reset")
+
+    # 1. Setup roadmap, phase, topic
+    rm = client.post("/roadmaps/", json={"title": "Full Stack Mastery"}).json()
+    rm_id = rm["id"]
+
+    ph = client.post("/phases/", json={"roadmap_id": rm_id, "title": "Phase 1: Backend", "order_index": 1}).json()
+    ph_id = ph["id"]
+
+    tp = client.post("/topics/", json={"phase_id": ph_id, "title": "FastAPI & Distributed Systems", "order_index": 1}).json()
+    tp_id = tp["id"]
+
+    # 2. Create Project 1: Complete fields
+    p1 = client.post("/projects/", json={
+        "roadmap_id": rm_id,
+        "topic_id": tp_id,
+        "title": "StudyOS Realtime Engine",
+        "description": "High performance async event processing server",
+        "github_url": "https://github.com/studyos/engine",
+        "live_url": "https://engine.studyos.dev",
+        "difficulty": "advanced",
+        "tech_stack": "Python, FastAPI, Redis, Docker",
+        "status": "in_progress"
+    }).json()
+
+    assert p1["id"] is not None
+    assert p1["title"] == "StudyOS Realtime Engine"
+    assert p1["roadmap_title"] == "Full Stack Mastery"
+    assert p1["topic_title"] == "FastAPI & Distributed Systems"
+    assert p1["status"] == "in_progress"
+    assert p1["difficulty"] == "advanced"
+    assert p1["tech_stack"] == "Python, FastAPI, Redis, Docker"
+    assert p1["completed_at"] is None
+
+    # 3. Create Project 2: Optional fields omitted
+    p2 = client.post("/projects/", json={
+        "roadmap_id": rm_id,
+        "title": "CLI Habit Tracker",
+        "difficulty": "beginner",
+        "tech_stack": "Rust"
+    }).json()
+
+    assert p2["id"] is not None
+    assert p2["title"] == "CLI Habit Tracker"
+    assert p2["status"] == "not_started"
+    assert p2["topic_id"] is None
+    assert p2["github_url"] is None
+
+    # 4. List all projects
+    all_proj = client.get("/projects/").json()
+    assert len(all_proj) == 2
+
+    # 5. Filter by roadmap_id
+    rm_proj = client.get(f"/projects/?roadmap_id={rm_id}").json()
+    assert len(rm_proj) == 2
+
+    # 6. Filter by topic_id
+    tp_proj = client.get(f"/projects/?topic_id={tp_id}").json()
+    assert len(tp_proj) == 1
+    assert tp_proj[0]["id"] == p1["id"]
+
+    # 7. Filter by status
+    in_prog = client.get("/projects/?status=in_progress").json()
+    assert len(in_prog) == 1
+    assert in_prog[0]["id"] == p1["id"]
+
+    # 8. Get single project
+    p1_get = client.get(f"/projects/{p1['id']}")
+    assert p1_get.status_code == 200
+    assert p1_get.json()["title"] == "StudyOS Realtime Engine"
+
+    # 9. Update project fields
+    p1_updated = client.patch(f"/projects/{p1['id']}", json={
+        "title": "StudyOS Distributed Engine",
+        "tech_stack": "Python, Rust, FastAPI"
+    }).json()
+    assert p1_updated["title"] == "StudyOS Distributed Engine"
+    assert p1_updated["tech_stack"] == "Python, Rust, FastAPI"
+
+    # 10. Update status to completed -> completed_at set
+    p1_completed = client.patch(f"/projects/{p1['id']}/status", json={"status": "completed"}).json()
+    assert p1_completed["status"] == "completed"
+    assert p1_completed["completed_at"] is not None
+
+    # 11. Update status back to in_progress -> completed_at cleared
+    p1_reopened = client.patch(f"/projects/{p1['id']}/status", json={"status": "in_progress"}).json()
+    assert p1_reopened["status"] == "in_progress"
+    assert p1_reopened["completed_at"] is None
+
+    # 12. Delete project
+    del_res = client.delete(f"/projects/{p2['id']}")
+    assert del_res.status_code == 204
+    assert client.get(f"/projects/{p2['id']}").status_code == 404
+    assert len(client.get("/projects/").json()) == 1
+
+    # 13. Validation error cases
+    # Invalid status in create
+    assert client.post("/projects/", json={"roadmap_id": rm_id, "title": "Bad", "status": "invalid_status"}).status_code == 400
+    # Invalid difficulty in create
+    assert client.post("/projects/", json={"roadmap_id": rm_id, "title": "Bad", "difficulty": "super_hard"}).status_code == 400
+    # Non-existent roadmap
+    assert client.post("/projects/", json={"roadmap_id": 99999, "title": "Bad"}).status_code == 404
+    # Non-existent topic
+    assert client.post("/projects/", json={"roadmap_id": rm_id, "topic_id": 99999, "title": "Bad"}).status_code == 404
+    # Status update invalid status
+    assert client.patch(f"/projects/{p1['id']}/status", json={"status": "bogus"}).status_code == 400
+    # 404 for non-existent project
+    assert client.get("/projects/99999").status_code == 404
+    assert client.patch("/projects/99999", json={"title": "Missing"}).status_code == 404
+    assert client.delete("/projects/99999").status_code == 404
+
+    # Cleanup
+    client.post("/system/reset")
+
+
+
 
 
 

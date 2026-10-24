@@ -30,3 +30,10 @@ class Roadmap(Base):
         back_populates="roadmap",
         cascade="all, delete-orphan",
     )
+    projects = relationship(
+        "Project",
+        back_populates="roadmap",
+        cascade="all, delete-orphan",
+        order_by="Project.created_at",
+    )
+

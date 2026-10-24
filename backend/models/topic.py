@@ -45,4 +45,9 @@ class Topic(Base):
         cascade="all, delete-orphan",
         order_by="Resource.created_at",
     )
+    projects = relationship(
+        "Project",
+        back_populates="topic",
+    )
+
 

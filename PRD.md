@@ -218,9 +218,9 @@ The following table reflects the **complete, audited status** of all V1.0 featur
 - **Phase Completion Velocity & Burndown Charts (`TASK-V13-002` - DONE-VERIFIED):** Phase burndown progress bars, remaining topic estimates, 7-day velocity average, schedule health status, projected finish date, and 7-day velocity chart.
 - **Monthly Study Hour Distribution Graphs (`TASK-V13-003` - DONE-VERIFIED):** Month-by-month study duration, full month day-by-day histogram, top topics share, and Monday–Sunday weekday study habits.
 
-### Milestone V1.4 — Projects & Resources (In Progress)
+### Completed: Milestone V1.4 — Projects & Resources (DONE-VERIFIED)
 - **Topic Learning Resource Shelf (`TASK-V14-001` - DONE-VERIFIED):** Resource repository linked to topics (Books, PDFs, documentation links, YouTube courses, GitHub links) with type selector chips, completion tracking, and quick shelf launcher.
-- **Practice Project Tracker with GitHub Links (`TASK-V14-002` - Backlog):** Project portfolio tracker with GitHub repo links.
+- **Practice Project Tracker with GitHub Links (`TASK-V14-002` - DONE-VERIFIED):** Project portfolio tracker with GitHub repo links, difficulty ratings, tech stack badges, status overview cards, clipboard URL copy, and roadmap navigation shortcut.
 
 ### Proposed V2.0 — Local AI Features
 - Local LLM study planner (Ollama/Llama-cpp).

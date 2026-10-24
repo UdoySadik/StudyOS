@@ -4,6 +4,7 @@ import '../../features/roadmap/presentation/roadmap_page.dart';
 import '../../features/schedule/presentation/schedule_page.dart';
 import '../../features/goals/presentation/goals_page.dart';
 import '../../features/notes/presentation/notes_page.dart';
+import '../../features/projects/presentation/projects_page.dart';
 import '../../features/settings/presentation/settings_page.dart';
 import '../../shared/widgets/app_shell.dart';
 
@@ -46,6 +47,13 @@ final GoRouter appRouter = GoRouter(
           name: 'notes',
           pageBuilder: (context, state) => const NoTransitionPage(
             child: NotesPage(),
+          ),
+        ),
+        GoRoute(
+          path: '/projects',
+          name: 'projects',
+          pageBuilder: (context, state) => const NoTransitionPage(
+            child: ProjectsPage(),
           ),
         ),
         GoRoute(

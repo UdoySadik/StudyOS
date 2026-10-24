@@ -60,11 +60,18 @@ const _navItems = [
     shortcut: 'Ctrl+5',
   ),
   _NavItem(
+    label: 'Projects',
+    icon: Icons.code_rounded,
+    activeIcon: Icons.code,
+    route: '/projects',
+    shortcut: 'Ctrl+6',
+  ),
+  _NavItem(
     label: 'Settings',
     icon: Icons.settings_outlined,
     activeIcon: Icons.settings,
     route: '/settings',
-    shortcut: 'Ctrl+6',
+    shortcut: 'Ctrl+7',
   ),
 ];
 
@@ -84,7 +91,8 @@ class AppShell extends ConsumerWidget {
         const SingleActivator(LogicalKeyboardKey.digit3, control: true): () => context.go('/schedule'),
         const SingleActivator(LogicalKeyboardKey.digit4, control: true): () => context.go('/goals'),
         const SingleActivator(LogicalKeyboardKey.digit5, control: true): () => context.go('/notes'),
-        const SingleActivator(LogicalKeyboardKey.digit6, control: true): () => context.go('/settings'),
+        const SingleActivator(LogicalKeyboardKey.digit6, control: true): () => context.go('/projects'),
+        const SingleActivator(LogicalKeyboardKey.digit7, control: true): () => context.go('/settings'),
       },
       child: Focus(
         autofocus: true,
