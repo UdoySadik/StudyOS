@@ -13,12 +13,12 @@
 |---|---|:---:|---|
 | **V1.0 MVP Core** | Core Roadmap, Notes, Goals, Dashboard, Backend | ✅ **DONE-VERIFIED** | October 2026 |
 | **V1.0 Stabilization** | UI Polish, Deprecation Fixes, Reset & Theme wiring | ✅ **DONE-VERIFIED** | October 2026 |
-| **V1.1 Productivity** | Roadmap search, Keyboard shortcuts, View toggles | 📋 PROPOSED | Post-V1.0 |
-| **V1.2 Planning** | Daily/Weekly planners, Study-hour tracking | 📋 PROPOSED | Future |
-| **V1.3 Analytics** | Consistency streaks, Completion trends, Hour charts | 📋 PROPOSED | Future |
-| **V1.4 Resources** | Project tracker, Syllabus book & URL repository | 📋 PROPOSED | Future |
-| **V2.0 Local AI** | Offline AI Study Planner, Quiz generator, Note summarizer | 📋 PROPOSED | Future |
-| **V2.x Doc Intel** | Local PDF QA and Textbook RAG | 📋 PROPOSED | Future |
+| **V1.1 Productivity** | Roadmap search, Keyboard shortcuts, View toggles | ✅ **DONE-VERIFIED** | October 2026 |
+| **V1.2 Planning** | Daily/Weekly planners, Study-hour tracking | ✅ **DONE-VERIFIED** | October 2026 |
+| **V1.3 Analytics** | Consistency streaks, Completion trends, Hour charts | ✅ **DONE-VERIFIED** | October 2026 |
+| **V1.4 Resources** | Project tracker, Syllabus book & URL repository | ✅ **DONE-VERIFIED** | October 2026 |
+| **V2.0 Local AI** | Offline AI Study Planner, Quiz generator, Note summarizer | ✅ **DONE-VERIFIED** | October 2026 |
+| **V2.x Doc Intel** | Local PDF QA and Textbook RAG | ✅ **DONE-VERIFIED** | October 2026 |
 | **V3.0 Sync & Cloud** | Multi-device encrypted sync, Cloud backups | 📋 PROPOSED | Long-term |
 
 ---
@@ -209,8 +209,11 @@
   - **Evidence:** `backend/schemas/note_ai.py`, `backend/routers/note_ai.py`, `backend/tests/test_routers.py` (`test_note_ai_endpoints`), `frontend/lib/features/notes/domain/note_ai_models.dart`, `frontend/lib/features/notes/application/note_ai_provider.dart`, `frontend/lib/features/notes/presentation/note_ai_dialog.dart`, `frontend/lib/features/notes/presentation/notes_page.dart`, `frontend/test/note_ai_test.dart`. Verified via pytest (15/15 passed), `flutter test` (44/44 passed), and `flutter analyze` (0 issues).
 
 
-### V2.x — Document Intelligence
-- [ ] **`TASK-V2X-001` — Local Textbook & Paper PDF Q&A with RAG** (`BACKLOG`, P2)
+### V2.x — Document Intelligence (Completed - 100% DONE-VERIFIED)
+- [x] **`TASK-V2X-001` — Local Textbook & Paper PDF Q&A with RAG**
+  - **Status:** `DONE-VERIFIED` | **Priority:** P2 | **Milestone:** V2.x Document Intelligence
+  - **Description:** Implemented local Retrieval-Augmented Generation (RAG) for study textbooks, research papers, and documentation without cloud telemetry. Backend includes `Document` and `DocumentChunk` SQLAlchemy models with cascade deletion, Pydantic schemas, sliding-window chunking with page marker detection (`--- Page N ---`), offline hybrid search (TF-IDF term frequencies, exact phrase boosting, and stop-word filtering), local Ollama synthesis with deterministic offline fallback, and full CRUD router (`GET /documents/`, `GET /documents/{id}`, `POST /documents/`, `DELETE /documents/{id}`, `POST /documents/query`). Frontend delivers dedicated desktop `DocumentHubPage` (shortcut `Ctrl+9`, Settings becomes `Ctrl+0`), two-column master-detail library shelf, real-time search, interactive RAG Q&A query runner with suggested prompts and top-k controls, citation cards with source page attribution and relevance percentage badges, and a sliding-window chunk inspector.
+  - **Evidence:** `backend/models/document.py`, `backend/schemas/document_rag.py`, `backend/routers/document_rag.py`, `backend/tests/test_routers.py` (`test_document_rag_endpoints`), `frontend/lib/features/documents/domain/document_models.dart`, `frontend/lib/features/documents/application/documents_provider.dart`, `frontend/lib/features/documents/presentation/document_hub_page.dart`, `frontend/lib/features/documents/presentation/add_document_dialog.dart`, `frontend/lib/core/router/app_router.dart`, `frontend/lib/shared/widgets/app_shell.dart`, `frontend/test/documents_test.dart`. Verified via pytest (16/16 passed), `flutter test` (53/53 passed), and `flutter analyze` (0 issues).
 
 ### V3.0 — Cloud & Sync
 - [ ] **`TASK-V30-001` — End-to-End Encrypted Multi-Device Sync** (`BACKLOG`, P3)

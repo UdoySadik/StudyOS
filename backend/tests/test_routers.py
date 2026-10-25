@@ -1116,6 +1116,134 @@ def test_note_ai_endpoints():
     client.post("/system/reset")
 
 
+def test_document_rag_endpoints():
+    client.post("/system/reset")
+
+    # 1. Setup linked hierarchy
+    rm = client.post("/roadmaps/", json={"title": "Systems Architecture", "description": "Large-scale systems"}).json()
+    rm_id = rm["id"]
+    ph = client.post("/phases/", json={"roadmap_id": rm_id, "title": "Data Storage"}).json()
+    tp = client.post("/topics/", json={"phase_id": ph["id"], "title": "Replication & Consensus"}).json()
+    tp_id = tp["id"]
+
+    # 2. Empty list
+    res_empty = client.get("/documents/")
+    assert res_empty.status_code == 200
+    assert res_empty.json() == []
+
+    # 3. Create Document 1 (Textbook Chapter)
+    ddia_content = (
+        "# Chapter 5: Replication\n\n"
+        "Replication means keeping a copy of the same data on multiple machines connected via a network.\n\n"
+        "Leader-based replication (active/passive): One replica is designated as the leader. "
+        "When clients write to the database, they send requests to the leader, which writes data locally "
+        "and sends data changes to followers as part of a replication log.\n\n"
+        "Synchronous vs Asynchronous Replication: In synchronous replication, the leader waits until "
+        "a follower confirms write completion before notifying the client. Asynchronous replication "
+        "provides higher throughput but risks data loss if the leader fails before replicating."
+    )
+    res_doc1 = client.post("/documents/", json={
+        "title": "Designing Data-Intensive Applications: Chapter 5",
+        "doc_type": "textbook",
+        "content": ddia_content,
+        "topic_id": tp_id,
+        "roadmap_id": rm_id,
+    })
+    assert res_doc1.status_code == 201
+    doc1 = res_doc1.json()
+    doc1_id = doc1["id"]
+    assert doc1["title"] == "Designing Data-Intensive Applications: Chapter 5"
+    assert doc1["doc_type"] == "textbook"
+    assert doc1["total_chunks"] >= 1
+    assert len(doc1["chunks"]) == doc1["total_chunks"]
+    assert doc1["chunks"][0]["word_count"] > 10
+
+    # 4. Create Document 2 with explicit page markers (Research Paper)
+    raft_content = (
+        "--- Page 1 ---\n"
+        "# In Search of an Understandable Consensus Algorithm\n\n"
+        "Raft is a consensus algorithm for managing a replicated log. It produces a result equivalent "
+        "to multi-Paxos, and it is as efficient as Paxos, but its structure makes it more understandable. "
+        "Raft separates key elements of consensus, such as leader election, log replication, and safety.\n\n"
+        "--- Page 2 ---\n"
+        "Leader Election Mechanics: Raft uses a heartbeat mechanism to trigger leader election. "
+        "When servers start up, they begin as followers. A server remains in follower state as long as "
+        "it receives valid RPCs from a leader or candidate. "
+        "To avoid split votes between candidates, election timeouts are randomized from a fixed interval "
+        "(e.g., 150-300ms). This ensures that one server times out, wins the election, and sends heartbeats."
+    )
+    res_doc2 = client.post("/documents/", json={
+        "title": "Raft Consensus Paper (Ongaro & Ousterhout)",
+        "doc_type": "paper",
+        "content": raft_content,
+        "topic_id": tp_id,
+    })
+    assert res_doc2.status_code == 201
+    doc2 = res_doc2.json()
+    doc2_id = doc2["id"]
+    assert doc2["total_pages"] == 2
+    # Verify page assignment
+    pages_found = {c["page_number"] for c in doc2["chunks"]}
+    assert 1 in pages_found or 2 in pages_found
+
+    # 5. List and filter documents
+    res_list = client.get("/documents/")
+    assert res_list.status_code == 200
+    assert len(res_list.json()) == 2
+
+    res_filter_q = client.get("/documents/?q=Raft")
+    assert res_filter_q.status_code == 200
+    assert len(res_filter_q.json()) == 1
+    assert res_filter_q.json()[0]["id"] == doc2_id
+
+    res_filter_rm = client.get(f"/documents/?roadmap_id={rm_id}")
+    assert res_filter_rm.status_code == 200
+    assert len(res_filter_rm.json()) == 1
+
+    # 6. Retrieve detail of Document 1
+    detail_res = client.get(f"/documents/{doc1_id}")
+    assert detail_res.status_code == 200
+    assert detail_res.json()["id"] == doc1_id
+    assert len(detail_res.json()["chunks"]) > 0
+
+    # 7. Perform RAG query
+    rag_res = client.post("/documents/query", json={
+        "query": "How are split votes avoided during leader election?",
+        "top_k": 2,
+    })
+    assert rag_res.status_code == 200
+    rag_data = rag_res.json()
+    assert rag_data["query"] == "How are split votes avoided during leader election?"
+    assert len(rag_data["citations"]) >= 1
+    assert "Leader Election" in rag_data["answer_markdown"] or "election" in rag_data["answer_markdown"].lower()
+    assert rag_data["citations"][0]["relevance_score"] > 0.0
+    assert rag_data["model_used"] in ["builtin-offline"] or rag_data["model_used"].startswith("ollama:")
+
+    # 8. Query scoped to specific document_id
+    scoped_res = client.post("/documents/query", json={
+        "query": "What is synchronous replication?",
+        "document_ids": [doc1_id],
+        "top_k": 1,
+    })
+    assert scoped_res.status_code == 200
+    scoped_data = scoped_res.json()
+    assert scoped_data["citations"][0]["document_id"] == doc1_id
+    assert "synchronous" in scoped_data["citations"][0]["snippet"].lower()
+
+    # 9. Delete Document 1
+    assert client.delete(f"/documents/{doc1_id}").status_code == 204
+    assert client.get(f"/documents/{doc1_id}").status_code == 404
+
+    # 10. Error handling
+    assert client.get("/documents/99999").status_code == 404
+    assert client.delete("/documents/99999").status_code == 404
+    assert client.post("/documents/", json={"title": "Short", "content": "too small"}).status_code == 422
+    assert client.post("/documents/", json={"title": "Doc", "content": "Long enough content here for testing error", "topic_id": 99999}).status_code == 404
+    assert client.post("/documents/query", json={"query": " "}).status_code in [400, 422]
+
+    client.post("/system/reset")
+
+
 
 
 

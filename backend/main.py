@@ -7,7 +7,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from database import init_db
-from routers import roadmaps, phases, topics, subtopics, notes, goals, dashboard, system, schedule, study_sessions, calendar, analytics, resources, projects, ai_planner, study_recall, note_ai
+from routers import roadmaps, phases, topics, subtopics, notes, goals, dashboard, system, schedule, study_sessions, calendar, analytics, resources, projects, ai_planner, study_recall, note_ai, document_rag
 
 
 @asynccontextmanager
@@ -53,6 +53,7 @@ app.include_router(projects.router)
 app.include_router(ai_planner.router)
 app.include_router(study_recall.router)
 app.include_router(note_ai.router)
+app.include_router(document_rag.router)
 
 
 @app.get("/health", tags=["system"])

@@ -227,8 +227,8 @@ The following table reflects the **complete, audited status** of all V1.0 featur
 - **Automated Flashcard & Quiz Generation from Notes (`TASK-V20-002` - DONE-VERIFIED):** Generate active recall flashcard decks (with 3D animated flip cards and mastery tracking) and interactive multiple-choice quizzes with explanations directly from study notes or manual input via local Ollama and offline heuristic extractor.
 - **AI Note Summarizer & Concept Explainer (`TASK-V20-003` - DONE-VERIFIED):** Distill study notes into executive briefs, key takeaways, bullet points, or cheat sheets, and explain complex concepts across four depths (Beginner/ELI5, Intermediate, Technical Deep Dive, Analogy) with one-click insertion and clipboard export.
 
-### Proposed V2.x — Document Intelligence
-- Local RAG (Retrieval-Augmented Generation) over study PDFs and textbooks.
+### Completed: Milestone V2.x — Document Intelligence (DONE-VERIFIED)
+- **Local Textbook & Paper PDF Q&A with RAG (`TASK-V2X-001` - DONE-VERIFIED):** Local Retrieval-Augmented Generation (RAG) over study PDFs, research papers, and textbook chapters. Features sliding-window chunking, offline TF-IDF and term-frequency hybrid retrieval, citations with relevance percentage scoring, Ollama AI synthesis with offline evidence extractor fallback, and a dedicated `DocumentHubPage` with two-column library shelf, chunk inspector, and `Ctrl+9` keyboard shortcut.
 
 ### Proposed V3.0 — Cloud & Sync
 - Multi-device encrypted sync and backup.

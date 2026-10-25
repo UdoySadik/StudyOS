@@ -12,6 +12,7 @@ from .project import Project
 from .study_plan import AIStudyPlan
 from .flashcard import FlashcardDeck, Flashcard
 from .quiz import Quiz, QuizQuestion
+from .document import Document, DocumentChunk
 
 __all__ = [
     "Roadmap",
@@ -29,6 +30,8 @@ __all__ = [
     "Flashcard",
     "Quiz",
     "QuizQuestion",
+    "Document",
+    "DocumentChunk",
 ]
 
 
