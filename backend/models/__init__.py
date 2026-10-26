@@ -13,6 +13,7 @@ from .study_plan import AIStudyPlan
 from .flashcard import FlashcardDeck, Flashcard
 from .quiz import Quiz, QuizQuestion
 from .document import Document, DocumentChunk
+from .sync_device import SyncDevice
 
 __all__ = [
     "Roadmap",
@@ -32,6 +33,7 @@ __all__ = [
     "QuizQuestion",
     "Document",
     "DocumentChunk",
+    "SyncDevice",
 ]
 
 

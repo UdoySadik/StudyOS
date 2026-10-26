@@ -1244,6 +1244,161 @@ def test_document_rag_endpoints():
     client.post("/system/reset")
 
 
+def test_sync_endpoints():
+    client.post("/system/reset")
+
+    # 1. Initial Sync Status
+    res_status = client.get("/sync/status")
+    assert res_status.status_code == 200
+    st_data = res_status.json()
+    assert "device_id" in st_data
+    assert st_data["total_roadmaps"] == 0
+    assert st_data["total_notes"] == 0
+
+    # 2. Register Friendly Device Name
+    res_reg = client.post("/sync/device/register", json={"device_name": "Udoy Laptop Workstation"})
+    assert res_reg.status_code == 200
+    assert res_reg.json()["device_name"] == "Udoy Laptop Workstation"
+
+    # 3. Create Sample Study Hierarchy & Items
+    rm = client.post("/roadmaps/", json={"title": "Distributed Algorithms", "description": "Consensus & fault tolerance"}).json()
+    rm_id = rm["id"]
+    ph = client.post("/phases/", json={"roadmap_id": rm_id, "title": "Consensus"}).json()
+    tp = client.post("/topics/", json={"phase_id": ph["id"], "title": "Paxos Protocol"}).json()
+    tp_id = tp["id"]
+    client.post("/subtopics/", json={"topic_id": tp_id, "title": "Phase 1a Prepare"})
+
+    # Note
+    client.put(f"/notes/topic/{tp_id}", json={"content": "Paxos achieves consensus on a single value through proposer-acceptor quorum."})
+
+    # Resource
+    client.post("/resources/", json={
+        "topic_id": tp_id,
+        "title": "Paxos Made Simple",
+        "url": "https://lamport.azurewebsites.net/pubs/paxos-simple.pdf",
+        "resource_type": "pdf",
+    })
+
+    # Project
+    client.post("/projects/", json={
+        "roadmap_id": rm_id,
+        "topic_id": tp_id,
+        "title": "Paxos KV Store",
+        "description": "Multi-Paxos replicated state machine in Rust",
+        "difficulty": "hard",
+        "status": "in_progress",
+    })
+
+    # Flashcard
+    client.post("/api/study-recall/generate", json={
+        "topic_id": tp_id,
+        "deck_title": "Paxos Flashcards",
+        "source_text": "Paxos is a consensus protocol. Acceptors promise not to accept older proposals.",
+        "generate_flashcards": True,
+        "generate_quiz": False,
+    })
+
+    # Document
+    client.post("/documents/", json={
+        "title": "Leslie Lamport: Paxos Paper",
+        "doc_type": "paper",
+        "content": "--- Page 1 ---\nPaxos consensus basics.\n\n--- Page 2 ---\nLeader election and invariant guarantees.",
+        "topic_id": tp_id,
+    })
+
+    # 4. Status reflects created entities
+    mid_status = client.get("/sync/status").json()
+    assert mid_status["total_roadmaps"] == 1
+    assert mid_status["total_topics"] == 1
+    assert mid_status["total_notes"] == 1
+    assert mid_status["total_documents"] == 1
+
+    # 5. Export Encrypted Sync Bundle
+    passphrase = "StudyOS@MasterSyncKey2026!"
+    export_res = client.post("/sync/export", json={
+        "passphrase": passphrase,
+        "include_documents": True,
+    })
+    assert export_res.status_code == 200
+    bundle = export_res.json()
+    assert bundle["bundle_version"] == "1.0"
+    assert "salt_hex" in bundle
+    assert "nonce_hex" in bundle
+    assert "ciphertext_base64" in bundle
+    assert "checksum_sha256" in bundle
+    assert bundle["entity_counts"]["roadmaps"] == 1
+    assert bundle["entity_counts"]["notes"] == 1
+    assert bundle["entity_counts"]["documents"] == 1
+
+    # Ensure ciphertext is not plaintext
+    assert "Paxos" not in bundle["ciphertext_base64"]
+
+    # 6. Attempt Import with WRONG passphrase -> Expect 400
+    bad_import = client.post("/sync/import", json={
+        "passphrase": "WrongPassphrase123!",
+        "salt_hex": bundle["salt_hex"],
+        "nonce_hex": bundle["nonce_hex"],
+        "ciphertext_base64": bundle["ciphertext_base64"],
+        "checksum_sha256": bundle["checksum_sha256"],
+    })
+    assert bad_import.status_code == 400
+    assert "Decryption failed" in bad_import.json()["detail"]
+
+    # 7. Clean reset to simulate importing onto a second/fresh device
+    client.post("/system/reset")
+    assert client.get("/roadmaps/").json() == []
+    assert client.get("/documents/").json() == []
+
+    # 8. Successful Import with CORRECT passphrase
+    import_res = client.post("/sync/import", json={
+        "passphrase": passphrase,
+        "salt_hex": bundle["salt_hex"],
+        "nonce_hex": bundle["nonce_hex"],
+        "ciphertext_base64": bundle["ciphertext_base64"],
+        "checksum_sha256": bundle["checksum_sha256"],
+        "merge_mode": "merge",
+    })
+    assert import_res.status_code == 200
+    import_data = import_res.json()
+    assert import_data["success"] is True
+    assert import_data["entities_imported"]["roadmaps"] == 1
+    assert import_data["entities_imported"]["notes"] == 1
+    assert import_data["entities_imported"]["documents"] == 1
+
+    # 9. Verify restored entities in database
+    restored_rm = client.get("/roadmaps/").json()
+    assert len(restored_rm) == 1
+    assert restored_rm[0]["title"] == "Distributed Algorithms"
+
+    restored_docs = client.get("/documents/").json()
+    assert len(restored_docs) == 1
+    assert restored_docs[0]["title"] == "Leslie Lamport: Paxos Paper"
+
+    restored_notes = client.get("/notes/").json()
+    assert len(restored_notes) == 1
+    assert "proposer-acceptor quorum" in restored_notes[0]["content"]
+
+    # 10. Test Backup Export and Restore
+    backup_exp = client.post("/sync/backup/export", json={"passphrase": passphrase})
+    assert backup_exp.status_code == 200
+    backup_data = backup_exp.json()
+
+    client.post("/system/reset")
+    assert client.get("/roadmaps/").json() == []
+
+    backup_rest = client.post("/sync/backup/restore", json={
+        "passphrase": passphrase,
+        "salt_hex": backup_data["salt_hex"],
+        "nonce_hex": backup_data["nonce_hex"],
+        "ciphertext_base64": backup_data["ciphertext_base64"],
+        "checksum_sha256": backup_data["checksum_sha256"],
+    })
+    assert backup_rest.status_code == 200
+    assert len(client.get("/roadmaps/").json()) == 1
+
+    client.post("/system/reset")
+
+
 
 
 

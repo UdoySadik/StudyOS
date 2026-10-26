@@ -4,6 +4,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../shared/services/api_service.dart';
 import '../../dashboard/application/dashboard_provider.dart';
 import '../../roadmap/application/roadmap_provider.dart';
+import '../../sync/presentation/sync_center_dialog.dart';
 
 class SettingsPage extends ConsumerWidget {
   const SettingsPage({super.key});
@@ -51,6 +52,12 @@ class SettingsPage extends ConsumerWidget {
                   _buildInfoRow('Database Engine', 'SQLite 3.x (WAL mode)', isDark),
                   _buildInfoRow('Local Port', '127.0.0.1:8000', isDark),
                   _buildInfoRow('Platform Support', 'Windows / Linux', isDark),
+                  Divider(
+                    color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+                    height: 32,
+                  ),
+                  _buildSectionHeader('Cloud & Multi-Device Sync'),
+                  _buildSyncSetting(context, isDark),
                   Divider(
                     color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
                     height: 32,
@@ -145,6 +152,76 @@ class SettingsPage extends ConsumerWidget {
               color: isDark ? AppColors.textDarkPrimary : AppColors.textLightPrimary,
               fontSize: 14,
               fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSyncSetting(BuildContext context, bool isDark) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.darkCard : AppColors.lightSurface,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: isDark ? AppColors.darkBorder : AppColors.lightBorder),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Expanded(
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(
+                    Icons.sync_lock_rounded,
+                    color: AppColors.primary,
+                    size: 22,
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'End-to-End Encrypted Sync',
+                        style: TextStyle(
+                          color: isDark ? AppColors.textDarkPrimary : AppColors.textLightPrimary,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Export or merge encrypted bundles across multiple machines or save local snapshots.',
+                        style: TextStyle(
+                          color: isDark ? AppColors.textDarkSecondary : AppColors.textLightSecondary,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 16),
+          ElevatedButton.icon(
+            key: const Key('open_sync_center_btn'),
+            onPressed: () => SyncCenterDialog.show(context),
+            icon: const Icon(Icons.sync_rounded, size: 16),
+            label: const Text('Open Sync Center'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             ),
           ),
         ],

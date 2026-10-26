@@ -230,5 +230,6 @@ The following table reflects the **complete, audited status** of all V1.0 featur
 ### Completed: Milestone V2.x — Document Intelligence (DONE-VERIFIED)
 - **Local Textbook & Paper PDF Q&A with RAG (`TASK-V2X-001` - DONE-VERIFIED):** Local Retrieval-Augmented Generation (RAG) over study PDFs, research papers, and textbook chapters. Features sliding-window chunking, offline TF-IDF and term-frequency hybrid retrieval, citations with relevance percentage scoring, Ollama AI synthesis with offline evidence extractor fallback, and a dedicated `DocumentHubPage` with two-column library shelf, chunk inspector, and `Ctrl+9` keyboard shortcut.
 
-### Proposed V3.0 — Cloud & Sync
-- Multi-device encrypted sync and backup.
+### Completed: Milestone V3.0 — Cloud & Sync (In Progress - 1/2 Completed)
+- **End-to-End Encrypted Multi-Device Sync (`TASK-V30-001` - DONE-VERIFIED):** Zero-knowledge AES-256-GCM symmetric encryption with PBKDF2-HMAC-SHA256 (100,000 iterations), random salt, nonce, and SHA-256 integrity verification. Exports and safely merges entities (roadmaps, phases, topics, notes, goals, resources, projects, flashcards, quizzes, study sessions, and indexed RAG documents) across multiple devices with `SyncCenterDialog`, conflict resolution, and encrypted snapshot backup vaults.
+- Automated Local & Cloud Encrypted Backups (`TASK-V30-002` - Planned).
